@@ -183,33 +183,7 @@ export default function Home() {
 
           <p className="mt-4 text-xs text-slate-600">No credit card required. Try 1 portrait free.</p>
 
-          {/* Sport selection — pick to start */}
-          <p className="mt-16 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-6">Pick Your Sport to Get Started</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-3xl mx-auto">
-            {[
-              { id: "soccer", emoji: "⚽", label: "Soccer", gradient: "from-emerald-500 to-emerald-700", glow: "shadow-emerald-500/20", border: "hover:border-emerald-500/50" },
-              { id: "basketball", emoji: "🏀", label: "Basketball", gradient: "from-orange-500 to-orange-700", glow: "shadow-orange-500/20", border: "hover:border-orange-500/50" },
-              { id: "baseball", emoji: "⚾", label: "Baseball", gradient: "from-blue-500 to-blue-700", glow: "shadow-blue-500/20", border: "hover:border-blue-500/50" },
-              { id: "football", emoji: "🏈", label: "Football", gradient: "from-red-500 to-red-700", glow: "shadow-red-500/20", border: "hover:border-red-500/50" },
-              { id: "volleyball", emoji: "🏐", label: "Volleyball", gradient: "from-violet-500 to-violet-700", glow: "shadow-violet-500/20", border: "hover:border-violet-500/50" },
-              { id: "softball", emoji: "🥎", label: "Softball", gradient: "from-yellow-500 to-yellow-700", glow: "shadow-yellow-500/20", border: "hover:border-yellow-500/50" },
-              { id: "lacrosse", emoji: "🥍", label: "Lacrosse", gradient: "from-cyan-500 to-cyan-700", glow: "shadow-cyan-500/20", border: "hover:border-cyan-500/50" },
-              { id: "hockey", emoji: "🏒", label: "Hockey", gradient: "from-sky-500 to-sky-700", glow: "shadow-sky-500/20", border: "hover:border-sky-500/50" },
-            ].map((sport) => (
-              <Link
-                key={sport.id}
-                href={`/create?sport=${sport.id}`}
-                className={`group relative aspect-[4/5] rounded-2xl border border-white/10 ${sport.border} bg-slate-900/60 overflow-hidden transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl ${sport.glow} flex flex-col items-center justify-center gap-3`}
-              >
-                <div className={`absolute inset-0 bg-gradient-to-b ${sport.gradient} opacity-[0.08] group-hover:opacity-[0.18] transition-opacity`} />
-                <span className="text-5xl sm:text-6xl relative z-10 group-hover:scale-110 transition-transform duration-300">{sport.emoji}</span>
-                <span className="relative z-10 text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400 group-hover:text-white transition-colors">{sport.label}</span>
-                <div className="absolute bottom-3 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                  <span className="text-[9px] font-bold text-white/60 bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">Create Portrait →</span>
-                </div>
-              </Link>
-            ))}
-          </div>
+          {/* Before/after showcase — placeholder for user-provided images */}
         </div>
       </section>
 
