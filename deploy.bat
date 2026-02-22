@@ -15,7 +15,7 @@ echo API URL: %API_URL%
 echo.
 
 gcloud run deploy %SERVICE% ^
-  --source . ^
+  --source "%~dp0." ^
   --region %REGION% ^
   --project %PROJECT% ^
   --allow-unauthenticated ^
@@ -29,4 +29,4 @@ gcloud run deploy %SERVICE% ^
 
 echo.
 echo === Deploy complete! ===
-pause
+if not defined DEPLOY_ALL pause
