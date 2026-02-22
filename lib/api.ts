@@ -17,11 +17,17 @@ export async function fetchSettings(): Promise<SalesSettings | null> {
   }
 }
 
-export async function generatePortrait(photoBase64: string, sport: string): Promise<{ ok: boolean; data?: string; error?: string; backend?: string }> {
+export async function generatePortrait(
+  photoBase64: string,
+  sport: string,
+  playerName?: string,
+  playerNumber?: string,
+  playerPosition?: string
+): Promise<{ ok: boolean; data?: string; error?: string; backend?: string }> {
   const res = await fetch(`${API_BASE}/api/consumer/portrait`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ photoBase64, sport }),
+    body: JSON.stringify({ photoBase64, sport, playerName, playerNumber, playerPosition }),
   });
 
   const json = await res.json();
