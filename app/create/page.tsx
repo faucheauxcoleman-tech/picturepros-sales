@@ -19,12 +19,12 @@ const SPORT_OPTIONS = [
 const DEFAULT_FREE_LIMIT = 1;
 const STORAGE_KEY = "pp_generations_used";
 
-type Step = "upload" | "details" | "generating" | "result";
+type Step = "sport" | "upload" | "details" | "generating" | "result";
 
 function CreatePageInner() {
   const searchParams = useSearchParams();
   const sportParam = searchParams.get("sport");
-  const [step, setStep] = useState<Step>("upload");
+  const [step, setStep] = useState<Step>(sportParam ? "upload" : "sport");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedSport, setSelectedSport] = useState<string | null>(sportParam);
   const [dragOver, setDragOver] = useState(false);
@@ -90,7 +90,8 @@ function CreatePageInner() {
         playerPosition.trim() || undefined
       );
       if (result.ok && result.data) {
-        setGeneratedImages([result.data]);
+        const composited = await compositePortrait(result.data);
+        setGeneratedImages([composited]);
         const newCount = generationsUsed + 1;
         setGenerationsUsed(newCount);
         try { localStorage.setItem(STORAGE_KEY, String(newCount)); } catch {}
@@ -107,6 +108,78 @@ function CreatePageInner() {
 
   const canGenerate = !!uploadedImage && !!selectedSport && !!playerName.trim() && !!playerNumber.trim() && freeRemaining > 0;
 
+  // Composite player info onto portrait via canvas
+  const compositePortrait = useCallback((imgSrc: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0);
+
+        const w = canvas.width;
+        const h = canvas.height;
+        const scale = w / 800; // base scale factor
+
+        // Dark gradient overlay at bottom for text readability
+        const grad = ctx.createLinearGradient(0, h * 0.7, 0, h);
+        grad.addColorStop(0, 'rgba(0,0,0,0)');
+        grad.addColorStop(0.5, 'rgba(0,0,0,0.6)');
+        grad.addColorStop(1, 'rgba(0,0,0,0.85)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, h * 0.7, w, h * 0.3);
+
+        // Player number - big, right side
+        if (playerNumber.trim()) {
+          const numSize = Math.round(72 * scale);
+          ctx.font = `900 ${numSize}px "Arial Black", Arial, sans-serif`;
+          ctx.textAlign = 'right';
+          ctx.fillStyle = 'rgba(255,255,255,0.15)';
+          ctx.fillText(`#${playerNumber.trim()}`, w - 20 * scale, h - 20 * scale);
+        }
+
+        // Player name - bottom left
+        if (playerName.trim()) {
+          const nameSize = Math.round(28 * scale);
+          ctx.font = `800 ${nameSize}px "Arial Black", Arial, sans-serif`;
+          ctx.textAlign = 'left';
+          ctx.fillStyle = 'white';
+          ctx.shadowColor = 'rgba(0,0,0,0.8)';
+          ctx.shadowBlur = 6 * scale;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 2 * scale;
+          ctx.fillText(playerName.trim().toUpperCase(), 24 * scale, h - 24 * scale);
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetY = 0;
+        }
+
+        // Number + position line - above name
+        const subParts: string[] = [];
+        if (playerNumber.trim()) subParts.push(`#${playerNumber.trim()}`);
+        if (playerPosition.trim()) subParts.push(playerPosition.trim());
+        const sportObj = SPORT_OPTIONS.find(s => s.id === selectedSport);
+        if (sportObj) subParts.push(sportObj.label);
+        if (subParts.length > 0) {
+          const subSize = Math.round(14 * scale);
+          ctx.font = `700 ${subSize}px Arial, sans-serif`;
+          ctx.textAlign = 'left';
+          ctx.fillStyle = 'rgba(255,255,255,0.7)';
+          ctx.shadowColor = 'rgba(0,0,0,0.6)';
+          ctx.shadowBlur = 4 * scale;
+          ctx.fillText(subParts.join('  ·  '), 24 * scale, h - 56 * scale);
+          ctx.shadowBlur = 0;
+        }
+
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => resolve(imgSrc);
+      img.src = imgSrc;
+    });
+  }, [playerName, playerNumber, playerPosition, selectedSport]);
+
   return (
     <div className="min-h-screen bg-slate-950">
       {/* Header */}
@@ -118,12 +191,13 @@ function CreatePageInner() {
 
           {/* Step indicator */}
           <div className="flex items-center gap-2">
-            {(["upload", "details", "result"] as const).map((s, i) => {
-              const labels = ["Photo", "Details", "Portrait"];
-              const isActive = step === s || (step === "generating" && s === "result");
-              const isDone =
-                (s === "upload" && step !== "upload") ||
-                (s === "details" && (step === "generating" || step === "result"));
+            {(["sport", "upload", "details", "result"] as const).map((s, i) => {
+              const labels = ["Sport", "Photo", "Details", "Portrait"];
+              const stepOrder: Record<Step, number> = { sport: 0, upload: 1, details: 2, generating: 3, result: 4 };
+              const thisOrder = stepOrder[s];
+              const currentOrder = stepOrder[step];
+              const isActive = (s === "result" && step === "generating") || step === s;
+              const isDone = thisOrder < currentOrder && !(s === "result" && step === "generating");
               return (
                 <div key={s} className="flex items-center gap-2">
                   {i > 0 && <div className={`w-6 h-px ${isDone ? "bg-indigo-500" : "bg-slate-800"}`} />}
@@ -147,6 +221,39 @@ function CreatePageInner() {
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+        {/* Step 0: Sport Selection */}
+        {step === "sport" && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
+                Pick Your <span className="gradient-text">Sport</span>
+              </h1>
+              <p className="text-slate-400 mt-2">Choose a sport to get started with your portrait.</p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-3xl mx-auto">
+              {SPORT_OPTIONS.map((sport) => (
+                <button
+                  key={sport.id}
+                  onClick={() => { setSelectedSport(sport.id); setStep("upload"); }}
+                  className={`group relative aspect-[4/5] rounded-2xl border bg-slate-900/60 overflow-hidden transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl flex flex-col items-center justify-center gap-3 ${
+                    selectedSport === sport.id
+                      ? `border-2 ${sport.border} shadow-lg`
+                      : "border-white/10 hover:border-slate-600"
+                  }`}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-b ${sport.bg} opacity-[0.08] group-hover:opacity-[0.18] transition-opacity`} />
+                  <span className="text-5xl sm:text-6xl relative z-10 group-hover:scale-110 transition-transform duration-300">{sport.emoji}</span>
+                  <span className="relative z-10 text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400 group-hover:text-white transition-colors">{sport.label}</span>
+                  <div className="absolute bottom-3 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                    <span className="text-[9px] font-bold text-white/60 bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">Select &rarr;</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Step 1: Upload / Take Photo */}
         {step === "upload" && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -452,7 +559,7 @@ function CreatePageInner() {
 
               {freeRemaining > 0 ? (
                 <button
-                  onClick={() => { setStep("upload"); setUploadedImage(null); setSelectedSport(sportParam); setGeneratedImages([]); setPlayerName(""); setPlayerNumber(""); setPlayerPosition(""); setError(null); }}
+                  onClick={() => { setStep(sportParam ? "upload" : "sport"); setUploadedImage(null); setSelectedSport(sportParam); setGeneratedImages([]); setPlayerName(""); setPlayerNumber(""); setPlayerPosition(""); setError(null); }}
                   className="mt-2 text-sm text-slate-500 hover:text-slate-300 transition"
                 >
                   Create Another Portrait
