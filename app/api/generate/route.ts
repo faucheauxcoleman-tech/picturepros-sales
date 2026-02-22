@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  const backendUrl =
+    process.env.API_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "https://teamscoutai-474460553303.us-central1.run.app";
   try {
     const body = await req.text();
 

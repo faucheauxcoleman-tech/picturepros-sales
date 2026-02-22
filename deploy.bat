@@ -24,8 +24,8 @@ gcloud run deploy %SERVICE% ^
   --cpu 1 ^
   --min-instances 0 ^
   --max-instances 3 ^
-  --set-env-vars "NEXT_PUBLIC_API_URL=%API_URL%" ^
-  --set-build-env-vars "NEXT_PUBLIC_API_URL=%API_URL%"
+  --set-env-vars "NEXT_PUBLIC_API_URL=%API_URL%,API_URL=%API_URL%" ^
+  --set-build-env-vars "NEXT_PUBLIC_API_URL=%API_URL%,API_URL=%API_URL%"
 
 echo.
 echo === Deploy complete! ===
