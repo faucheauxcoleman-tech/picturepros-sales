@@ -5,17 +5,15 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { generatePortrait, fetchSettings } from "@/lib/api";
 
-// Compress image to max dimension and quality to avoid huge payloads from phone cameras
-function compressImage(dataUrl: string, maxDim = 1536, quality = 0.85): Promise<string> {
-  return new Promise((resolve) => {
+// Compress image from File using Object URLs (Safari-safe, avoids huge data URLs in memory)
+function compressFile(file: File, maxDim = 1024, quality = 0.7): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
+      URL.revokeObjectURL(url);
       let { width, height } = img;
-      if (width <= maxDim && height <= maxDim) {
-        // Already small enough — check if it's a reasonable size
-        if (dataUrl.length < 4_000_000) { resolve(dataUrl); return; }
-      }
-      // Scale down
+      // Always scale to fit within maxDim
       if (width > height) {
         if (width > maxDim) { height = Math.round(height * maxDim / width); width = maxDim; }
       } else {
@@ -26,10 +24,19 @@ function compressImage(dataUrl: string, maxDim = 1536, quality = 0.85): Promise<
       canvas.height = height;
       const ctx = canvas.getContext('2d')!;
       ctx.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL('image/jpeg', quality));
+      const result = canvas.toDataURL('image/jpeg', quality);
+      console.log(`[compress] ${file.size} bytes → ${result.length} chars (${width}x${height})`);
+      resolve(result);
     };
-    img.onerror = () => resolve(dataUrl);
-    img.src = dataUrl;
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      // Fallback: read as data URL directly
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = () => reject(new Error('Failed to read image'));
+      reader.readAsDataURL(file);
+    };
+    img.src = url;
   });
 }
 
@@ -80,15 +87,15 @@ function CreatePageInner() {
 
   const handleFile = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const raw = e.target?.result as string;
-      // Compress immediately so we never hold a huge raw photo in state
-      const compressed = await compressImage(raw, 1536, 0.82);
+    try {
+      // Compress directly from File (never creates huge data URL in memory)
+      const compressed = await compressFile(file, 1024, 0.7);
       setUploadedImage(compressed);
       setStep("details");
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('[handleFile] compression failed:', err);
+      setError('Failed to process image. Please try a different photo.');
+    }
   }, []);
 
   const handleDrop = useCallback(
