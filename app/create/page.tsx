@@ -78,12 +78,14 @@ function CreatePageInner() {
 
   const freeRemaining = Math.max(0, freeLimit - generationsUsed);
 
-  const handleFile = useCallback((file: File) => {
+  const handleFile = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
-      const base64 = e.target?.result as string;
-      setUploadedImage(base64);
+    reader.onload = async (e) => {
+      const raw = e.target?.result as string;
+      // Compress immediately so we never hold a huge raw photo in state
+      const compressed = await compressImage(raw, 1536, 0.82);
+      setUploadedImage(compressed);
       setStep("details");
     };
     reader.readAsDataURL(file);
@@ -110,10 +112,8 @@ function CreatePageInner() {
     setStep("generating");
     setError(null);
     try {
-      // Compress photo before sending to avoid payload issues from phone cameras
-      const compressed = await compressImage(uploadedImage);
       const result = await generatePortrait(
-        compressed,
+        uploadedImage,
         selectedSport,
         playerName.trim(),
         playerNumber.trim(),
