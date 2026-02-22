@@ -26,7 +26,8 @@ export async function generatePortrait(
 ): Promise<{ ok: boolean; data?: string; error?: string; backend?: string }> {
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}/api/consumer/portrait`, {
+    // Use same-origin proxy to avoid CORS issues (Safari)
+    res = await fetch(`/api/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ photoBase64, sport, playerName, playerNumber, playerPosition }),
