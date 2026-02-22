@@ -390,9 +390,28 @@ function CreatePageInner() {
           </div>
         )}
 
-        {/* Step 2: Player Details + Sport Selection */}
+        {/* Step 2: Player Details */}
         {step === "details" && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Sport badge at top */}
+            {selectedSport && (() => {
+              const sport = SPORT_OPTIONS.find(s => s.id === selectedSport);
+              return sport ? (
+                <div className="flex items-center justify-center gap-3 mb-6">
+                  <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border ${sport.border} bg-gradient-to-r ${sport.bg}`}>
+                    <span className="text-lg">{sport.emoji}</span>
+                    <span className={`text-sm font-bold ${sport.text}`}>{sport.label}</span>
+                  </div>
+                  <button
+                    onClick={() => setStep("sport")}
+                    className="text-[10px] font-bold text-slate-500 hover:text-slate-300 underline underline-offset-2 transition"
+                  >
+                    Change
+                  </button>
+                </div>
+              ) : null;
+            })()}
+
             <div className="text-center mb-8">
               <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
                 Player <span className="gradient-text">Details</span>
@@ -458,36 +477,6 @@ function CreatePageInner() {
               </div>
             </div>
 
-            {/* Sport selection */}
-            <div className="mb-2">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center mb-4">Choose Sport *</p>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {SPORT_OPTIONS.map((sport) => (
-                <button
-                  key={sport.id}
-                  onClick={() => setSelectedSport(sport.id)}
-                  className={`relative rounded-2xl p-5 text-center transition-all hover:-translate-y-0.5 ${
-                    selectedSport === sport.id
-                      ? `bg-gradient-to-b ${sport.bg} border-2 ${sport.border} shadow-lg`
-                      : "border border-slate-800 bg-slate-900/50 hover:border-slate-600"
-                  }`}
-                >
-                  <span className="text-3xl">{sport.emoji}</span>
-                  <p className={`text-sm font-bold mt-2 ${selectedSport === sport.id ? sport.text : "text-slate-300"}`}>
-                    {sport.label}
-                  </p>
-                  {selectedSport === sport.id && (
-                    <div className="absolute top-2 right-2">
-                      <svg className={`w-5 h-5 ${sport.text}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                      </svg>
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-
             {/* Generate button */}
             <div className="mt-8 flex flex-col items-center gap-3">
               {freeRemaining > 0 ? (
@@ -506,11 +495,9 @@ function CreatePageInner() {
                   <p className="text-xs text-slate-600">
                     {freeRemaining} free portrait{freeRemaining !== 1 ? "s" : ""} remaining
                   </p>
-                  {!playerName.trim() || !playerNumber.trim() ? (
+                  {(!playerName.trim() || !playerNumber.trim()) && (
                     <p className="text-xs text-amber-500/70">Fill in player name and number to continue</p>
-                  ) : !selectedSport ? (
-                    <p className="text-xs text-amber-500/70">Select a sport to continue</p>
-                  ) : null}
+                  )}
                 </>
               ) : (
                 <div className="text-center">
