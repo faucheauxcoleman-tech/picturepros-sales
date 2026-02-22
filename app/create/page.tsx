@@ -5,6 +5,34 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { generatePortrait, fetchSettings } from "@/lib/api";
 
+// Compress image to max dimension and quality to avoid huge payloads from phone cameras
+function compressImage(dataUrl: string, maxDim = 1536, quality = 0.85): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width <= maxDim && height <= maxDim) {
+        // Already small enough — check if it's a reasonable size
+        if (dataUrl.length < 4_000_000) { resolve(dataUrl); return; }
+      }
+      // Scale down
+      if (width > height) {
+        if (width > maxDim) { height = Math.round(height * maxDim / width); width = maxDim; }
+      } else {
+        if (height > maxDim) { width = Math.round(width * maxDim / height); height = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 const SPORT_OPTIONS = [
   { id: "soccer", label: "Soccer", emoji: "⚽", bg: "from-emerald-600/20 to-emerald-900/30", border: "border-emerald-500/30", text: "text-emerald-400" },
   { id: "basketball", label: "Basketball", emoji: "🏀", bg: "from-orange-600/20 to-orange-900/30", border: "border-orange-500/30", text: "text-orange-400" },
@@ -82,8 +110,10 @@ function CreatePageInner() {
     setStep("generating");
     setError(null);
     try {
+      // Compress photo before sending to avoid payload issues from phone cameras
+      const compressed = await compressImage(uploadedImage);
       const result = await generatePortrait(
-        uploadedImage,
+        compressed,
         selectedSport,
         playerName.trim(),
         playerNumber.trim(),
@@ -100,8 +130,10 @@ function CreatePageInner() {
         setError(result.error || "Generation failed. Please try again.");
         setStep("details");
       }
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      console.error('[generate] error:', msg);
+      setError(`Something went wrong: ${msg}`);
       setStep("details");
     }
   };
