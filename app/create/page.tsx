@@ -56,6 +56,12 @@ const SPORT_OPTIONS = [
 
 const DEFAULT_FREE_LIMIT = 1;
 
+const DEFAULT_PRICING = [
+  { id: "pack-3", name: "Starter", portraits: 3, price: 4.99, featured: false },
+  { id: "pack-10", name: "Pro", portraits: 10, price: 12.99, featured: true },
+  { id: "pack-25", name: "Team", portraits: 25, price: 24.99, featured: false },
+];
+
 type Step = "sport" | "upload" | "uploading" | "details" | "generating" | "result";
 
 function CreatePageInner() {
@@ -595,7 +601,7 @@ function CreatePageInner() {
                 <div className="w-full max-w-lg">
                   <p className="text-sm font-bold text-slate-400 mb-4 text-center">You&apos;ve used your free portrait. Get more credits to continue!</p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {(settings?.pricing || []).map((pack) => (
+                    {(settings?.pricing?.length ? settings.pricing : DEFAULT_PRICING).map((pack) => (
                       <button
                         key={pack.id}
                         onClick={() => handleBuyCredits(pack.id)}
