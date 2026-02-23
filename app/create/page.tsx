@@ -56,7 +56,7 @@ const SPORT_OPTIONS = [
 
 const DEFAULT_FREE_LIMIT = 1;
 
-type Step = "sport" | "upload" | "details" | "generating" | "result";
+type Step = "sport" | "upload" | "uploading" | "details" | "generating" | "result";
 
 function CreatePageInner() {
   const searchParams = useSearchParams();
@@ -75,6 +75,7 @@ function CreatePageInner() {
   const [paidCredits, setPaidCredits] = useState(0);
   const [settings, setSettings] = useState<SalesSettings | null>(null);
   const [showSignIn, setShowSignIn] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -109,13 +110,23 @@ function CreatePageInner() {
   const handleFile = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) return;
     try {
-      // Compress directly from File (never creates huge data URL in memory)
+      setStep("uploading");
+      setUploadProgress(0);
+      // Animate progress bar while compressing
+      const progressInterval = setInterval(() => {
+        setUploadProgress((p) => Math.min(p + Math.random() * 18 + 8, 90));
+      }, 120);
       const compressed = await compressFile(file, 1024, 0.7);
+      clearInterval(progressInterval);
+      setUploadProgress(100);
       setUploadedImage(compressed);
+      // Brief pause at 100% before moving on
+      await new Promise((r) => setTimeout(r, 400));
       setStep("details");
     } catch (err) {
       console.error('[handleFile] compression failed:', err);
       setError('Failed to process image. Please try a different photo.');
+      setStep("upload");
     }
   }, []);
 
@@ -285,10 +296,10 @@ function CreatePageInner() {
           <div className="flex items-center gap-2">
             {(["sport", "upload", "details", "result"] as const).map((s, i) => {
               const labels = ["Sport", "Photo", "Details", "Portrait"];
-              const stepOrder: Record<Step, number> = { sport: 0, upload: 1, details: 2, generating: 3, result: 4 };
+              const stepOrder: Record<Step, number> = { sport: 0, upload: 1, uploading: 1, details: 2, generating: 3, result: 4 };
               const thisOrder = stepOrder[s];
               const currentOrder = stepOrder[step];
-              const isActive = (s === "result" && step === "generating") || step === s;
+              const isActive = (s === "result" && step === "generating") || (s === "upload" && step === "uploading") || step === s;
               const isDone = thisOrder < currentOrder && !(s === "result" && step === "generating");
               return (
                 <div key={s} className="flex items-center gap-2">
@@ -439,6 +450,28 @@ function CreatePageInner() {
                   {tip.label}
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Uploading progress */}
+        {step === "uploading" && (
+          <div className="animate-in fade-in duration-300 flex flex-col items-center justify-center py-20">
+            <div className="w-full max-w-xs">
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <svg className="w-6 h-6 text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <p className="text-sm font-bold text-slate-300">Processing photo...</p>
+              </div>
+              <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-150 ease-out"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+              <p className="text-xs text-slate-600 text-center mt-3">{Math.round(uploadProgress)}%</p>
             </div>
           </div>
         )}
