@@ -712,8 +712,11 @@ function CreatePageInner() {
 
               <div className="mt-4 p-4 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 text-center max-w-md">
                 <p className="text-sm font-bold text-indigo-400">Want more portraits?</p>
-                <p className="text-xs text-slate-400 mt-1">Get 3 portraits for just $4.99 — try different sports and styles.</p>
-                <button className="mt-3 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-black uppercase tracking-wider transition-all">
+                <p className="text-xs text-slate-400 mt-1">Get more credits to try different sports and styles.</p>
+                <button
+                  onClick={() => setStep("details")}
+                  className="mt-3 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                >
                   Upgrade Now
                 </button>
               </div>
