@@ -112,6 +112,11 @@ function CreatePageInner() {
     refreshCredits();
   }, [refreshCredits]);
 
+  // Auto-close sign-in modal when user signs in
+  useEffect(() => {
+    if (user && showSignIn) setShowSignIn(false);
+  }, [user, showSignIn]);
+
   // Auto-trigger checkout if user came from a paid pricing card (?buy=packId)
   const buyTriggered = useRef(false);
   useEffect(() => {
