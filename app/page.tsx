@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { fetchSettings, fetchCredits, SalesSettings } from "@/lib/api";
+import { fetchSettings, fetchCredits, createCheckout, SalesSettings } from "@/lib/api";
 import { useAuth } from "@/lib/AuthContext";
 import { signOut } from "@/lib/firebase";
 import SignInModal from "@/components/SignInModal";
@@ -135,6 +135,8 @@ export default function Home() {
   const [showBuyCredits, setShowBuyCredits] = useState(false);
   const [totalCredits, setTotalCredits] = useState<number | null>(null);
   const [pendingAction, setPendingAction] = useState<"create" | null>(null);
+  const [pendingBuyPack, setPendingBuyPack] = useState<string | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   useEffect(() => {
     fetchSettings().then((s) => {
@@ -155,7 +157,15 @@ export default function Home() {
 
   // After sign-in, if there was a pending action, check credits and proceed
   useEffect(() => {
-    if (user && pendingAction === "create") {
+    if (!user) return;
+    if (pendingBuyPack) {
+      const packId = pendingBuyPack;
+      setPendingBuyPack(null);
+      setPendingAction(null);
+      handleBuyPack(packId);
+      return;
+    }
+    if (pendingAction === "create") {
       setPendingAction(null);
       (async () => {
         try {
@@ -173,7 +183,30 @@ export default function Home() {
         }
       })();
     }
-  }, [user, pendingAction, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, pendingAction, pendingBuyPack, router]);
+
+  const handleBuyPack = async (packId: string) => {
+    if (!user) {
+      setPendingBuyPack(packId);
+      setShowSignIn(true);
+      return;
+    }
+    setCheckoutLoading(true);
+    try {
+      const token = await user.getIdToken();
+      const result = await createCheckout(token, packId);
+      if (result.ok && result.url) {
+        window.location.href = result.url;
+      } else {
+        alert(result.error || "Checkout failed. Please try again.");
+      }
+    } catch {
+      alert("Checkout error. Please try again.");
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
 
   const handleCreateClick = async () => {
     if (!user) {
@@ -383,16 +416,26 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                <Link
-                  href={plan.packId ? `/create?buy=${plan.packId}` : "/create"}
-                  className={`mt-8 w-full py-3 rounded-xl font-black text-sm uppercase tracking-wider text-center transition-all ${
-                    plan.highlight
-                      ? "bg-indigo-600 hover:bg-indigo-500 text-white hover:shadow-lg hover:shadow-indigo-500/25"
-                      : "bg-slate-800 hover:bg-slate-700 text-slate-300"
-                  }`}
-                >
-                  {plan.cta}
-                </Link>
+                {plan.packId ? (
+                  <button
+                    onClick={() => handleBuyPack(plan.packId)}
+                    disabled={checkoutLoading}
+                    className={`mt-8 w-full py-3 rounded-xl font-black text-sm uppercase tracking-wider text-center transition-all cursor-pointer disabled:opacity-60 disabled:cursor-wait ${
+                      plan.highlight
+                        ? "bg-indigo-600 hover:bg-indigo-500 text-white hover:shadow-lg hover:shadow-indigo-500/25"
+                        : "bg-slate-800 hover:bg-slate-700 text-slate-300"
+                    }`}
+                  >
+                    {checkoutLoading ? "Redirecting..." : plan.cta}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleCreateClick}
+                    className="mt-8 w-full py-3 rounded-xl font-black text-sm uppercase tracking-wider text-center transition-all cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-300"
+                  >
+                    {plan.cta}
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -458,17 +501,18 @@ export default function Home() {
             <p className="text-sm text-slate-400 mt-2">Purchase a credit pack to continue creating portraits.</p>
             <div className="mt-6 space-y-2">
               {pricing.filter(p => p.packId).map((plan) => (
-                <Link
+                <button
                   key={plan.packId}
-                  href={`/create?buy=${plan.packId}`}
-                  className={`block w-full py-3 rounded-xl font-bold text-sm transition-all ${
+                  onClick={() => { setShowBuyCredits(false); handleBuyPack(plan.packId); }}
+                  disabled={checkoutLoading}
+                  className={`block w-full py-3 rounded-xl font-bold text-sm transition-all cursor-pointer disabled:opacity-60 disabled:cursor-wait ${
                     plan.highlight
                       ? "bg-indigo-600 hover:bg-indigo-500 text-white"
                       : "bg-slate-800 hover:bg-slate-700 text-slate-300"
                   }`}
                 >
-                  {plan.name} — {plan.portraits} credits — {plan.price}{plan.period}
-                </Link>
+                  {checkoutLoading ? "Redirecting..." : `${plan.name} — ${plan.portraits} credits — ${plan.price}${plan.period}`}
+                </button>
               ))}
             </div>
           </div>
