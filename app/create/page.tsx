@@ -59,7 +59,6 @@ const DEFAULT_FREE_LIMIT = 1;
 const DEFAULT_PRICING = [
   { id: "pack-3", name: "Starter", portraits: 3, price: 4.99, featured: false },
   { id: "pack-10", name: "Pro", portraits: 10, price: 12.99, featured: true },
-  { id: "pack-25", name: "Team", portraits: 25, price: 24.99, featured: false },
 ];
 
 type Step = "sport" | "upload" | "uploading" | "details" | "generating" | "result";
