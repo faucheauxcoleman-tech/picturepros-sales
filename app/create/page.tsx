@@ -82,6 +82,7 @@ function CreatePageInner() {
   const [settings, setSettings] = useState<SalesSettings | null>(null);
   const [showSignIn, setShowSignIn] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -191,16 +192,23 @@ function CreatePageInner() {
 
   const handleBuyCredits = async (packId: string) => {
     if (!user) { setShowSignIn(true); return; }
+    setCheckoutLoading(true);
+    setError('');
     try {
       const token = await user.getIdToken();
+      console.log('[checkout] starting for pack:', packId);
       const result = await createCheckout(token, packId);
+      console.log('[checkout] result:', result);
       if (result.ok && result.url) {
         window.location.href = result.url;
       } else {
         setError(result.error || 'Failed to start checkout');
+        setCheckoutLoading(false);
       }
     } catch (e) {
+      console.error('[checkout] error:', e);
       setError(e instanceof Error ? e.message : 'Checkout error');
+      setCheckoutLoading(false);
     }
   };
 
@@ -605,7 +613,12 @@ function CreatePageInner() {
                       <button
                         key={pack.id}
                         onClick={() => handleBuyCredits(pack.id)}
-                        className={`relative rounded-2xl p-5 text-center transition-all hover:-translate-y-0.5 border ${
+                        disabled={checkoutLoading}
+                        className={`relative rounded-2xl p-5 text-center transition-all border ${
+                          checkoutLoading
+                            ? "opacity-60 cursor-wait"
+                            : "hover:-translate-y-0.5"
+                        } ${
                           pack.featured
                             ? "border-indigo-500/50 bg-gradient-to-b from-indigo-600/10 to-indigo-900/20 shadow-lg shadow-indigo-500/10"
                             : "border-slate-700 bg-slate-900/50 hover:border-slate-500"
@@ -614,9 +627,17 @@ function CreatePageInner() {
                         {pack.featured && (
                           <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-indigo-600 rounded-full text-[9px] font-black uppercase tracking-wider">Best Value</span>
                         )}
-                        <p className="text-2xl font-black text-white">${pack.price}</p>
-                        <p className="text-sm font-bold text-slate-300 mt-1">{pack.portraits} Portrait{pack.portraits > 1 ? "s" : ""}</p>
-                        <p className="text-[10px] text-slate-500 mt-1">${(pack.price / pack.portraits).toFixed(2)}/each</p>
+                        {checkoutLoading ? (
+                          <div className="flex items-center justify-center py-3">
+                            <div className="w-6 h-6 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-2xl font-black text-white">${pack.price}</p>
+                            <p className="text-sm font-bold text-slate-300 mt-1">{pack.portraits} Portrait{pack.portraits > 1 ? "s" : ""}</p>
+                            <p className="text-[10px] text-slate-500 mt-1">${(pack.price / pack.portraits).toFixed(2)}/each</p>
+                          </>
+                        )}
                       </button>
                     ))}
                   </div>
