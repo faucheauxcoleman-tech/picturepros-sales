@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     const authHeader = req.headers.get("authorization");
     if (authHeader) headers["Authorization"] = authHeader;
 
-    const backendRes = await fetch(`${backendUrl}/api/consumer/portrait`, {
+    const backendRes = await fetch(`${backendUrl}/api/consumer/checkout`, {
       method: "POST",
       headers,
       body,
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(data, { status: backendRes.status });
   } catch (err) {
-    console.error("[api/generate] proxy error:", err);
+    console.error("[api/checkout] proxy error:", err);
     return NextResponse.json(
       { error: { message: err instanceof Error ? err.message : "Proxy error" } },
       { status: 502 }

@@ -3,7 +3,10 @@
 import React, { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { generatePortrait, fetchSettings } from "@/lib/api";
+import { generatePortrait, fetchSettings, fetchCredits, createCheckout, type SalesSettings } from "@/lib/api";
+import { useAuth } from "@/lib/AuthContext";
+import { signOut } from "@/lib/firebase";
+import SignInModal from "@/components/SignInModal";
 
 // Compress image from File using Object URLs (Safari-safe, avoids huge data URLs in memory)
 function compressFile(file: File, maxDim = 1024, quality = 0.7): Promise<string> {
@@ -52,13 +55,13 @@ const SPORT_OPTIONS = [
 ];
 
 const DEFAULT_FREE_LIMIT = 1;
-const STORAGE_KEY = "pp_generations_used";
 
 type Step = "sport" | "upload" | "details" | "generating" | "result";
 
 function CreatePageInner() {
   const searchParams = useSearchParams();
   const sportParam = searchParams.get("sport");
+  const { user } = useAuth();
   const [step, setStep] = useState<Step>(sportParam ? "upload" : "sport");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedSport, setSelectedSport] = useState<string | null>(sportParam);
@@ -68,22 +71,40 @@ function CreatePageInner() {
   const [playerName, setPlayerName] = useState("");
   const [playerNumber, setPlayerNumber] = useState("");
   const [playerPosition, setPlayerPosition] = useState("");
-  const [generationsUsed, setGenerationsUsed] = useState(0);
-  const [freeLimit, setFreeLimit] = useState(DEFAULT_FREE_LIMIT);
+  const [freeRemaining, setFreeRemaining] = useState(DEFAULT_FREE_LIMIT);
+  const [paidCredits, setPaidCredits] = useState(0);
+  const [settings, setSettings] = useState<SalesSettings | null>(null);
+  const [showSignIn, setShowSignIn] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  // Load settings on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) setGenerationsUsed(parseInt(stored) || 0);
-    } catch {}
     fetchSettings().then((s) => {
-      if (s && typeof s.freePortraits === 'number') setFreeLimit(s.freePortraits);
+      if (s) setSettings(s);
     });
   }, []);
 
-  const freeRemaining = Math.max(0, freeLimit - generationsUsed);
+  // Load credits from server when user signs in
+  const refreshCredits = useCallback(async () => {
+    if (!user) return;
+    try {
+      const token = await user.getIdToken();
+      const data = await fetchCredits(token);
+      if (data) {
+        setFreeRemaining(data.freeRemaining);
+        setPaidCredits(data.credits);
+      }
+    } catch (e) {
+      console.error('[refreshCredits] error:', e);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    refreshCredits();
+  }, [refreshCredits]);
+
+  const totalCredits = freeRemaining + paidCredits;
 
   const handleFile = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) return;
@@ -115,23 +136,29 @@ function CreatePageInner() {
 
   const handleGenerate = async () => {
     if (!uploadedImage || !selectedSport || !playerName.trim() || !playerNumber.trim()) return;
-    if (freeRemaining <= 0) return;
+    // Require sign-in before generating
+    if (!user) {
+      setShowSignIn(true);
+      return;
+    }
+    if (totalCredits <= 0) return;
     setStep("generating");
     setError(null);
     try {
+      const token = await user.getIdToken();
       const result = await generatePortrait(
         uploadedImage,
         selectedSport,
         playerName.trim(),
         playerNumber.trim(),
-        playerPosition.trim() || undefined
+        playerPosition.trim() || undefined,
+        token
       );
       if (result.ok && result.data) {
         const composited = await compositePortrait(result.data);
         setGeneratedImages([composited]);
-        const newCount = generationsUsed + 1;
-        setGenerationsUsed(newCount);
-        try { localStorage.setItem(STORAGE_KEY, String(newCount)); } catch {}
+        // Refresh credits from server
+        await refreshCredits();
         setStep("result");
       } else {
         setError(result.error || "Generation failed. Please try again.");
@@ -145,7 +172,22 @@ function CreatePageInner() {
     }
   };
 
-  const canGenerate = !!uploadedImage && !!selectedSport && !!playerName.trim() && !!playerNumber.trim() && freeRemaining > 0;
+  const handleBuyCredits = async (packId: string) => {
+    if (!user) { setShowSignIn(true); return; }
+    try {
+      const token = await user.getIdToken();
+      const result = await createCheckout(token, packId);
+      if (result.ok && result.url) {
+        window.location.href = result.url;
+      } else {
+        setError(result.error || 'Failed to start checkout');
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Checkout error');
+    }
+  };
+
+  const canGenerate = !!uploadedImage && !!selectedSport && !!playerName.trim() && !!playerNumber.trim() && (user ? totalCredits > 0 : true);
 
   // Composite player info onto portrait via canvas
   const compositePortrait = useCallback((imgSrc: string): Promise<string> => {
@@ -221,6 +263,17 @@ function CreatePageInner() {
 
   return (
     <div className="min-h-screen bg-slate-950">
+      {/* Sign-in modal */}
+      <SignInModal
+        open={showSignIn}
+        onClose={() => setShowSignIn(false)}
+        onSuccess={() => {
+          setShowSignIn(false);
+          // Auto-trigger generation after sign-in
+          setTimeout(() => handleGenerate(), 300);
+        }}
+      />
+
       {/* Header */}
       <nav className="border-b border-white/5 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -477,9 +530,9 @@ function CreatePageInner() {
               </div>
             </div>
 
-            {/* Generate button */}
+            {/* Generate button / Buy credits */}
             <div className="mt-8 flex flex-col items-center gap-3">
-              {freeRemaining > 0 ? (
+              {totalCredits > 0 || !user ? (
                 <>
                   <button
                     onClick={handleGenerate}
@@ -490,22 +543,44 @@ function CreatePageInner() {
                         : "bg-slate-800 text-slate-600 cursor-not-allowed"
                     }`}
                   >
-                    Generate Portrait — Free
+                    {freeRemaining > 0 ? "Generate Portrait — Free" : "Generate Portrait"}
                   </button>
                   <p className="text-xs text-slate-600">
-                    {freeRemaining} free portrait{freeRemaining !== 1 ? "s" : ""} remaining
+                    {user ? (
+                      freeRemaining > 0
+                        ? `${freeRemaining} free portrait${freeRemaining !== 1 ? "s" : ""} remaining`
+                        : `${paidCredits} credit${paidCredits !== 1 ? "s" : ""} remaining`
+                    ) : (
+                      "Sign in to generate"
+                    )}
                   </p>
                   {(!playerName.trim() || !playerNumber.trim()) && (
                     <p className="text-xs text-amber-500/70">Fill in player name and number to continue</p>
                   )}
                 </>
               ) : (
-                <div className="text-center">
-                  <p className="text-sm font-bold text-slate-400 mb-2">You&apos;ve used your free portrait</p>
-                  <button className="px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 font-black text-base uppercase tracking-wider transition-all hover:shadow-2xl hover:shadow-indigo-500/25">
-                    Unlock More Portraits
-                  </button>
-                  <p className="text-xs text-slate-600 mt-2">Starting at $4.99 for 3 portraits</p>
+                <div className="w-full max-w-lg">
+                  <p className="text-sm font-bold text-slate-400 mb-4 text-center">You&apos;ve used your free portrait. Get more credits to continue!</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {(settings?.pricing || []).map((pack) => (
+                      <button
+                        key={pack.id}
+                        onClick={() => handleBuyCredits(pack.id)}
+                        className={`relative rounded-2xl p-5 text-center transition-all hover:-translate-y-0.5 border ${
+                          pack.featured
+                            ? "border-indigo-500/50 bg-gradient-to-b from-indigo-600/10 to-indigo-900/20 shadow-lg shadow-indigo-500/10"
+                            : "border-slate-700 bg-slate-900/50 hover:border-slate-500"
+                        }`}
+                      >
+                        {pack.featured && (
+                          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-indigo-600 rounded-full text-[9px] font-black uppercase tracking-wider">Best Value</span>
+                        )}
+                        <p className="text-2xl font-black text-white">${pack.price}</p>
+                        <p className="text-sm font-bold text-slate-300 mt-1">{pack.portraits} Portrait{pack.portraits > 1 ? "s" : ""}</p>
+                        <p className="text-[10px] text-slate-500 mt-1">${(pack.price / pack.portraits).toFixed(2)}/each</p>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -595,6 +670,26 @@ function CreatePageInner() {
           </div>
         )}
       </div>
+
+      {/* User bar at bottom */}
+      {user && (
+        <div className="fixed bottom-4 right-4 z-40">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-slate-900/90 border border-slate-700 backdrop-blur-sm">
+            <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold">
+              {user.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?'}
+            </div>
+            <span className="text-xs text-slate-400 max-w-[120px] truncate hidden sm:block">
+              {user.displayName || user.email}
+            </span>
+            <button
+              onClick={() => signOut()}
+              className="text-[10px] text-slate-500 hover:text-slate-300 underline"
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

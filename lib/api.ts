@@ -22,14 +22,18 @@ export async function generatePortrait(
   sport: string,
   playerName?: string,
   playerNumber?: string,
-  playerPosition?: string
+  playerPosition?: string,
+  authToken?: string
 ): Promise<{ ok: boolean; data?: string; error?: string; backend?: string }> {
   let res: Response;
   try {
     // Use same-origin proxy to avoid CORS issues (Safari)
     res = await fetch(`/api/generate`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(authToken ? { "Authorization": `Bearer ${authToken}` } : {}),
+      },
       body: JSON.stringify({ photoBase64, sport, playerName, playerNumber, playerPosition }),
     });
   } catch (e) {
@@ -49,4 +53,37 @@ export async function generatePortrait(
   }
 
   return { ok: true, data: json.data as string, backend: json.backend as string };
+}
+
+// Fetch consumer credit balance (requires auth)
+export async function fetchCredits(authToken: string): Promise<{ credits: number; freeRemaining: number } | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/consumer/credits`, {
+      headers: { "Authorization": `Bearer ${authToken}` },
+    });
+    const json = await res.json();
+    if (json.ok) return { credits: json.credits, freeRemaining: json.freeRemaining };
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// Create Stripe checkout session (requires auth)
+export async function createCheckout(authToken: string, packId: string): Promise<{ ok: boolean; url?: string; error?: string }> {
+  try {
+    const res = await fetch(`/api/checkout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({ packId }),
+    });
+    const json = await res.json();
+    if (json.ok && json.url) return { ok: true, url: json.url };
+    return { ok: false, error: json?.error?.message || "Checkout failed" };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Checkout error" };
+  }
 }
