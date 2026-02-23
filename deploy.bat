@@ -7,7 +7,7 @@ set SERVICE=picturepros-sales
 set API_URL=https://studio.picturepros.ai
 
 REM Read Firebase + Stripe config from internal tool's .env.local
-set ENV_FILE=%~dp0teamscout-ai-extractor (1)\.env.local
+set ENV_FILE=%~dp0..\teamscout-ai-extractor (1)\.env.local
 if exist "%ENV_FILE%" (
   echo Reading config from %ENV_FILE%...
   for /f "usebackq tokens=1,* delims==" %%A in ("%ENV_FILE%") do (
