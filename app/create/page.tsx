@@ -738,6 +738,7 @@ function CreatePageInner() {
                 >
                   {checkoutLoading ? "Redirecting..." : "Upgrade Now"}
                 </button>
+                {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
               </div>
 
               {freeRemaining > 0 ? (

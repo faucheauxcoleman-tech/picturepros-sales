@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { fetchSettings, SalesSettings } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { fetchSettings, fetchCredits, SalesSettings } from "@/lib/api";
 import { useAuth } from "@/lib/AuthContext";
 import { signOut } from "@/lib/firebase";
+import SignInModal from "@/components/SignInModal";
 
 const SPORTS = [
   { name: "Soccer", emoji: "⚽" },
@@ -121,14 +123,74 @@ function buildPricingFromSettings(s: SalesSettings) {
 }
 
 export default function Home() {
+  const router = useRouter();
   const { user } = useAuth();
   const [pricing, setPricing] = useState(DEFAULT_PRICING);
+  const [showSignIn, setShowSignIn] = useState(false);
+  const [showBuyCredits, setShowBuyCredits] = useState(false);
+  const [totalCredits, setTotalCredits] = useState<number | null>(null);
+  const [pendingAction, setPendingAction] = useState<"create" | null>(null);
 
   useEffect(() => {
     fetchSettings().then((s) => {
       if (s) setPricing(buildPricingFromSettings(s));
     });
   }, []);
+
+  const refreshCredits = useCallback(async () => {
+    if (!user) { setTotalCredits(null); return; }
+    try {
+      const token = await user.getIdToken();
+      const data = await fetchCredits(token);
+      if (data) setTotalCredits(data.freeRemaining + data.credits);
+    } catch { /* ignore */ }
+  }, [user]);
+
+  useEffect(() => { refreshCredits(); }, [refreshCredits]);
+
+  // After sign-in, if there was a pending action, check credits and proceed
+  useEffect(() => {
+    if (user && pendingAction === "create") {
+      setPendingAction(null);
+      (async () => {
+        try {
+          const token = await user.getIdToken();
+          const data = await fetchCredits(token);
+          const credits = data ? data.freeRemaining + data.credits : 0;
+          setTotalCredits(credits);
+          if (credits > 0) {
+            router.push("/create");
+          } else {
+            setShowBuyCredits(true);
+          }
+        } catch {
+          router.push("/create");
+        }
+      })();
+    }
+  }, [user, pendingAction, router]);
+
+  const handleCreateClick = async () => {
+    if (!user) {
+      setPendingAction("create");
+      setShowSignIn(true);
+      return;
+    }
+    // Already signed in — check credits
+    try {
+      const token = await user.getIdToken();
+      const data = await fetchCredits(token);
+      const credits = data ? data.freeRemaining + data.credits : 0;
+      setTotalCredits(credits);
+      if (credits > 0) {
+        router.push("/create");
+      } else {
+        setShowBuyCredits(true);
+      }
+    } catch {
+      router.push("/create");
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -143,12 +205,17 @@ export default function Home() {
             <a href="#how-it-works" className="hidden sm:block text-sm text-slate-400 hover:text-white transition">How It Works</a>
             {user ? (
               <div className="flex items-center gap-3">
-                <Link
-                  href="/create"
+                {totalCredits !== null && (
+                  <span className="text-xs font-bold text-slate-400 bg-slate-800 px-3 py-1 rounded-full">
+                    {totalCredits} credit{totalCredits !== 1 ? "s" : ""}
+                  </span>
+                )}
+                <button
+                  onClick={handleCreateClick}
                   className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-full text-sm font-bold transition-all hover:shadow-lg hover:shadow-indigo-500/25"
                 >
                   Create
-                </Link>
+                </button>
                 <button
                   onClick={() => signOut()}
                   className="text-sm text-slate-400 hover:text-white transition"
@@ -158,12 +225,12 @@ export default function Home() {
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <Link
-                  href="/create"
+                <button
+                  onClick={() => setShowSignIn(true)}
                   className="text-sm text-slate-400 hover:text-white transition"
                 >
                   Sign In
-                </Link>
+                </button>
                 <Link
                   href="/create"
                   className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-full text-sm font-bold transition-all hover:shadow-lg hover:shadow-indigo-500/25"
@@ -200,12 +267,12 @@ export default function Home() {
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/create"
-              className="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-base font-black uppercase tracking-wider transition-all hover:shadow-2xl hover:shadow-indigo-500/25 hover:-translate-y-0.5"
+            <button
+              onClick={handleCreateClick}
+              className="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-base font-black uppercase tracking-wider transition-all hover:shadow-2xl hover:shadow-indigo-500/25 hover:-translate-y-0.5 cursor-pointer"
             >
               Create Your Portrait — Free
-            </Link>
+            </button>
             <a
               href="#how-it-works"
               className="w-full sm:w-auto px-8 py-4 border border-slate-700 hover:border-slate-500 rounded-2xl text-base font-bold text-slate-300 transition-all hover:bg-slate-900"
@@ -334,12 +401,12 @@ export default function Home() {
             Ready to See <span className="gradient-text">Your Kid as a Pro?</span>
           </h2>
           <p className="mt-4 text-slate-400 text-lg">It takes 30 seconds. Upload a photo and watch the magic happen.</p>
-          <Link
-            href="/create"
-            className="inline-block mt-8 px-10 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-base font-black uppercase tracking-wider transition-all hover:shadow-2xl hover:shadow-indigo-500/25 hover:-translate-y-0.5"
+          <button
+            onClick={handleCreateClick}
+            className="inline-block mt-8 px-10 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-base font-black uppercase tracking-wider transition-all hover:shadow-2xl hover:shadow-indigo-500/25 hover:-translate-y-0.5 cursor-pointer"
           >
-            Try Free — No Sign Up Required
-          </Link>
+            Get Started Now
+          </button>
         </div>
       </section>
 
@@ -358,6 +425,50 @@ export default function Home() {
           <p className="text-xs text-slate-600">&copy; {new Date().getFullYear()} Picture Pros. All rights reserved.</p>
         </div>
       </footer>
+      <SignInModal
+        open={showSignIn}
+        onClose={() => { setShowSignIn(false); setPendingAction(null); }}
+        onSuccess={() => setShowSignIn(false)}
+      />
+
+      {/* Buy Credits Modal */}
+      {showBuyCredits && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowBuyCredits(false)} />
+          <div className="relative w-full max-w-sm bg-slate-900 border border-slate-700 rounded-3xl p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-center">
+            <button
+              onClick={() => setShowBuyCredits(false)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:text-white transition"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-indigo-600/20 flex items-center justify-center">
+              <svg className="w-7 h-7 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-black tracking-tight">No Credits Remaining</h2>
+            <p className="text-sm text-slate-400 mt-2">Purchase a credit pack to continue creating portraits.</p>
+            <div className="mt-6 space-y-2">
+              {pricing.filter(p => p.packId).map((plan) => (
+                <Link
+                  key={plan.packId}
+                  href={`/create?buy=${plan.packId}`}
+                  className={`block w-full py-3 rounded-xl font-bold text-sm transition-all ${
+                    plan.highlight
+                      ? "bg-indigo-600 hover:bg-indigo-500 text-white"
+                      : "bg-slate-800 hover:bg-slate-700 text-slate-300"
+                  }`}
+                >
+                  {plan.name} — {plan.price}{plan.period}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
