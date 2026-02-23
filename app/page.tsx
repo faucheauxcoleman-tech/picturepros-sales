@@ -132,7 +132,7 @@ function buildPricingFromSettings(s: SalesSettings) {
 export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
-  const [pricing, setPricing] = useState(DEFAULT_PRICING);
+  const [pricing, setPricing] = useState<typeof DEFAULT_PRICING | null>(null);
   const [showSignIn, setShowSignIn] = useState(false);
   const [showBuyCredits, setShowBuyCredits] = useState(false);
   const [totalCredits, setTotalCredits] = useState<number | null>(null);
@@ -142,8 +142,8 @@ export default function Home() {
 
   useEffect(() => {
     fetchSettings().then((s) => {
-      if (s) setPricing(buildPricingFromSettings(s));
-    });
+      setPricing(s ? buildPricingFromSettings(s) : DEFAULT_PRICING);
+    }).catch(() => setPricing(DEFAULT_PRICING));
   }, []);
 
   const refreshCredits = useCallback(async () => {
@@ -388,11 +388,12 @@ export default function Home() {
           </div>
 
           <div className={`grid grid-cols-1 gap-6 max-w-5xl mx-auto ${
+            !pricing ? 'sm:grid-cols-3 max-w-4xl' :
             pricing.length <= 3 ? 'sm:grid-cols-3 max-w-4xl' :
             pricing.length === 4 ? 'sm:grid-cols-2 lg:grid-cols-4' :
             'sm:grid-cols-2 lg:grid-cols-3'
           }`}>
-            {pricing.map((plan) => (
+            {(pricing || []).map((plan) => (
               <div
                 key={plan.name}
                 className={`rounded-3xl p-8 flex flex-col ${
@@ -506,7 +507,7 @@ export default function Home() {
             <h2 className="text-xl font-black tracking-tight">No Credits Remaining</h2>
             <p className="text-sm text-slate-400 mt-2">Purchase a credit pack to continue creating portraits.</p>
             <div className="mt-6 space-y-2">
-              {pricing.filter(p => p.packId).map((plan) => (
+              {(pricing || []).filter(p => p.packId).map((plan) => (
                 <button
                   key={plan.packId}
                   onClick={() => { setShowBuyCredits(false); handleBuyPack(plan.packId); }}
