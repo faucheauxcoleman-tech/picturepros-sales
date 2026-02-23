@@ -57,6 +57,7 @@ const DEFAULT_PRICING = [
     features: ["1 free AI portrait", "Any sport or style", "Instant download", "Standard resolution"],
     cta: "Start Free",
     highlight: false,
+    packId: "",
   },
   {
     name: "Portrait Pack",
@@ -66,6 +67,7 @@ const DEFAULT_PRICING = [
     features: ["5 AI portraits", "All sports & styles", "HD resolution", "Multiple poses", "Priority generation"],
     cta: "Get Started",
     highlight: true,
+    packId: "pack-3",
   },
   {
     name: "Pro Pack",
@@ -75,6 +77,7 @@ const DEFAULT_PRICING = [
     features: ["15 AI portraits", "All sports & styles", "HD resolution", "Print-ready files", "Priority generation", "8x10 print included"],
     cta: "Go Pro",
     highlight: false,
+    packId: "pack-10",
   },
 ];
 
@@ -89,6 +92,7 @@ function buildPricingFromSettings(s: SalesSettings) {
     features: [`${s.freePortraits} free AI portrait${s.freePortraits !== 1 ? 's' : ''}`, "Any sport or style", "Instant download", "Standard resolution"],
     cta: "Start Free",
     highlight: false,
+    packId: "",
   });
   // Paid tiers from admin settings
   s.pricing.forEach((tier, i) => {
@@ -108,6 +112,7 @@ function buildPricingFromSettings(s: SalesSettings) {
       ],
       cta: tier.featured ? "Get Started" : "Go Pro",
       highlight: tier.featured,
+      packId: tier.id,
     });
   });
   return plans;
@@ -279,7 +284,7 @@ export default function Home() {
                   ))}
                 </ul>
                 <Link
-                  href="/create"
+                  href={plan.packId ? `/create?buy=${plan.packId}` : "/create"}
                   className={`mt-8 w-full py-3 rounded-xl font-black text-sm uppercase tracking-wider text-center transition-all ${
                     plan.highlight
                       ? "bg-indigo-600 hover:bg-indigo-500 text-white hover:shadow-lg hover:shadow-indigo-500/25"

@@ -67,6 +67,7 @@ type Step = "sport" | "upload" | "uploading" | "details" | "generating" | "resul
 function CreatePageInner() {
   const searchParams = useSearchParams();
   const sportParam = searchParams.get("sport");
+  const buyParam = searchParams.get("buy");
   const { user } = useAuth();
   const [step, setStep] = useState<Step>(sportParam ? "upload" : "sport");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -111,6 +112,16 @@ function CreatePageInner() {
   useEffect(() => {
     refreshCredits();
   }, [refreshCredits]);
+
+  // Auto-trigger checkout if user came from a paid pricing card (?buy=packId)
+  const buyTriggered = useRef(false);
+  useEffect(() => {
+    if (!buyParam || buyTriggered.current) return;
+    if (!user) { setShowSignIn(true); return; }
+    buyTriggered.current = true;
+    handleBuyCredits(buyParam);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buyParam, user]);
 
   const totalCredits = freeRemaining + paidCredits;
 
