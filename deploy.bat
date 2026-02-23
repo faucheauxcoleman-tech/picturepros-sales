@@ -4,7 +4,7 @@ echo === Deploying Picture Pros Sales Site to Cloud Run ===
 set PROJECT=colemans-ai-database
 set REGION=us-central1
 set SERVICE=picturepros-sales
-set API_URL=https://teamscoutai-474460553303.us-central1.run.app
+set API_URL=https://studio.picturepros.ai
 
 REM Read Firebase + Stripe config from internal tool's .env.local
 set ENV_FILE=%~dp0teamscout-ai-extractor (1)\.env.local

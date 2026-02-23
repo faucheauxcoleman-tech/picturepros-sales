@@ -4,7 +4,7 @@ export async function POST(req: NextRequest) {
   const backendUrl =
     process.env.API_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
-    "https://teamscoutai-474460553303.us-central1.run.app";
+    "https://studio.picturepros.ai";
   try {
     const body = await req.text();
 
