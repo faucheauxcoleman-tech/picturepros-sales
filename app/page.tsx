@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { fetchSettings, SalesSettings } from "@/lib/api";
+import { useAuth } from "@/lib/AuthContext";
+import { signOut } from "@/lib/firebase";
 
 const SPORTS = [
   { name: "Soccer", emoji: "⚽" },
@@ -119,6 +121,7 @@ function buildPricingFromSettings(s: SalesSettings) {
 }
 
 export default function Home() {
+  const { user } = useAuth();
   const [pricing, setPricing] = useState(DEFAULT_PRICING);
 
   useEffect(() => {
@@ -138,12 +141,37 @@ export default function Home() {
           <div className="flex items-center gap-4">
             <a href="#pricing" className="hidden sm:block text-sm text-slate-400 hover:text-white transition">Pricing</a>
             <a href="#how-it-works" className="hidden sm:block text-sm text-slate-400 hover:text-white transition">How It Works</a>
-            <Link
-              href="/create"
-              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-full text-sm font-bold transition-all hover:shadow-lg hover:shadow-indigo-500/25"
-            >
-              Try Free
-            </Link>
+            {user ? (
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/create"
+                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-full text-sm font-bold transition-all hover:shadow-lg hover:shadow-indigo-500/25"
+                >
+                  Create
+                </Link>
+                <button
+                  onClick={() => signOut()}
+                  className="text-sm text-slate-400 hover:text-white transition"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/create"
+                  className="text-sm text-slate-400 hover:text-white transition"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/create"
+                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-full text-sm font-bold transition-all hover:shadow-lg hover:shadow-indigo-500/25"
+                >
+                  Try Free
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </nav>
