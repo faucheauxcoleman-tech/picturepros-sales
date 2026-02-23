@@ -83,6 +83,7 @@ function CreatePageInner() {
   const [showSignIn, setShowSignIn] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [showBuyModal, setShowBuyModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -313,6 +314,56 @@ function CreatePageInner() {
           setTimeout(() => handleGenerate(), 300);
         }}
       />
+
+      {/* Buy Credits Modal */}
+      {showBuyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowBuyModal(false)} />
+          <div className="relative w-full max-w-sm bg-slate-900 border border-slate-700 rounded-3xl p-8 shadow-2xl text-center">
+            <button
+              onClick={() => setShowBuyModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:text-white transition"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-indigo-600/20 flex items-center justify-center">
+              <svg className="w-7 h-7 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-black tracking-tight">Buy Credits</h2>
+            <p className="text-sm text-slate-400 mt-2">Choose a credit pack to continue creating portraits.</p>
+            <div className="mt-6 space-y-3">
+              {(settings?.pricing?.length ? settings.pricing : DEFAULT_PRICING).map((pack) => {
+                const dollars = Math.floor(pack.price);
+                const cents = Math.round((pack.price - dollars) * 100);
+                const priceStr = `$${dollars}${cents > 0 ? `.${cents.toString().padStart(2, "0")}` : ""}`;
+                return (
+                  <button
+                    key={pack.id}
+                    onClick={() => { setShowBuyModal(false); handleBuyCredits(pack.id); }}
+                    disabled={checkoutLoading}
+                    className={`relative block w-full py-4 px-4 rounded-2xl font-bold text-sm transition-all cursor-pointer disabled:opacity-60 disabled:cursor-wait ${
+                      pack.featured
+                        ? "bg-indigo-600 hover:bg-indigo-500 text-white border-2 border-indigo-400"
+                        : "bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
+                    }`}
+                  >
+                    {pack.featured && (
+                      <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-indigo-500 rounded-full text-[9px] font-black uppercase tracking-wider text-white">Best Value</span>
+                    )}
+                    <span className="text-lg font-black">{pack.portraits} credits</span>
+                    <span className="block text-xs mt-0.5 opacity-75">{pack.name} — {priceStr}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {error && <p className="mt-3 text-xs text-red-400">{error}</p>}
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <nav className="border-b border-white/5 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50">
@@ -621,41 +672,14 @@ function CreatePageInner() {
                   )}
                 </>
               ) : (
-                <div className="w-full max-w-lg">
-                  <p className="text-sm font-bold text-slate-400 mb-4 text-center">You&apos;ve used your free portrait. Get more credits to continue!</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {(settings?.pricing?.length ? settings.pricing : DEFAULT_PRICING).map((pack) => (
-                      <button
-                        key={pack.id}
-                        onClick={() => handleBuyCredits(pack.id)}
-                        disabled={checkoutLoading}
-                        className={`relative rounded-2xl p-5 text-center transition-all border ${
-                          checkoutLoading
-                            ? "opacity-60 cursor-wait"
-                            : "hover:-translate-y-0.5"
-                        } ${
-                          pack.featured
-                            ? "border-indigo-500/50 bg-gradient-to-b from-indigo-600/10 to-indigo-900/20 shadow-lg shadow-indigo-500/10"
-                            : "border-slate-700 bg-slate-900/50 hover:border-slate-500"
-                        }`}
-                      >
-                        {pack.featured && (
-                          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-indigo-600 rounded-full text-[9px] font-black uppercase tracking-wider">Best Value</span>
-                        )}
-                        {checkoutLoading ? (
-                          <div className="flex items-center justify-center py-3">
-                            <div className="w-6 h-6 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
-                          </div>
-                        ) : (
-                          <>
-                            <p className="text-2xl font-black text-white">${pack.price}</p>
-                            <p className="text-sm font-bold text-slate-300 mt-1">{pack.portraits} Portrait{pack.portraits > 1 ? "s" : ""}</p>
-                            <p className="text-[10px] text-slate-500 mt-1">${(pack.price / pack.portraits).toFixed(2)}/each</p>
-                          </>
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                <div className="text-center">
+                  <p className="text-sm font-bold text-slate-400 mb-3">You&apos;ve used your free portrait. Get more credits to continue!</p>
+                  <button
+                    onClick={() => setShowBuyModal(true)}
+                    className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-black text-sm uppercase tracking-wider transition-all cursor-pointer"
+                  >
+                    Buy Credits
+                  </button>
                 </div>
               )}
             </div>
@@ -698,25 +722,43 @@ function CreatePageInner() {
             </div>
 
             <div className="flex justify-center">
-              <div className="relative w-64 sm:w-80 aspect-[3/4] rounded-3xl overflow-hidden border border-slate-700 glow">
+              <div className="relative w-64 sm:w-80 rounded-3xl overflow-hidden border border-slate-700 glow">
                 {generatedImages[0] && (
-                  <img src={generatedImages[0]} alt="Generated portrait" className="w-full h-full object-cover" />
+                  <img src={generatedImages[0]} alt="Generated portrait" className="w-full h-auto" />
                 )}
               </div>
             </div>
 
             <div className="mt-8 flex flex-col items-center gap-3">
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                <a
-                  href={generatedImages[0] || "#"}
-                  download={`${(playerName || "portrait").replace(/\s+/g, "_")}_portrait.png`}
-                  className="px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+                <button
+                  onClick={async () => {
+                    const url = generatedImages[0];
+                    if (!url) return;
+                    const fileName = `${(playerName || "portrait").replace(/\s+/g, "_")}_portrait.png`;
+                    try {
+                      const res = await fetch(url);
+                      const blob = await res.blob();
+                      const file = new File([blob], fileName, { type: blob.type || "image/png" });
+                      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({ files: [file], title: fileName });
+                        return;
+                      }
+                    } catch { /* share cancelled or unsupported, fall through */ }
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                  }}
+                  className="px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                   </svg>
-                  Download
-                </a>
+                  Save Image
+                </button>
                 <button className="px-8 py-3 rounded-xl border border-slate-700 hover:border-slate-500 font-bold text-sm text-slate-300 transition-all flex items-center justify-center gap-2">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18.75 12h.008v.008h-.008V12zm-8.25 0h.008v.008H10.5V12z" />
@@ -725,32 +767,19 @@ function CreatePageInner() {
                 </button>
               </div>
 
-              <div className="mt-4 p-4 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 text-center max-w-md">
-                <p className="text-sm font-bold text-indigo-400">Want more portraits?</p>
-                <p className="text-xs text-slate-400 mt-1">Get more credits to try different sports and styles.</p>
-                <div className="mt-3 flex flex-col gap-2">
-                  {(settings?.pricing?.length ? settings.pricing : DEFAULT_PRICING).map((pack) => {
-                    const dollars = Math.floor(pack.price);
-                    const cents = Math.round((pack.price - dollars) * 100);
-                    const priceStr = `$${dollars}${cents > 0 ? `.${cents.toString().padStart(2, "0")}` : ""}`;
-                    return (
-                      <button
-                        key={pack.id}
-                        onClick={() => handleBuyCredits(pack.id)}
-                        disabled={checkoutLoading}
-                        className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-60 disabled:cursor-wait ${
-                          pack.featured
-                            ? "bg-indigo-600 hover:bg-indigo-500"
-                            : "bg-slate-800 hover:bg-slate-700 text-slate-300"
-                        }`}
-                      >
-                        {checkoutLoading ? "Redirecting..." : `${pack.name} — ${pack.portraits} credits — ${priceStr}`}
-                      </button>
-                    );
-                  })}
+              {freeRemaining <= 0 && paidCredits <= 0 && (
+                <div className="mt-4 p-4 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 text-center max-w-md">
+                  <p className="text-sm font-bold text-indigo-400">Out of credits</p>
+                  <p className="text-xs text-slate-400 mt-1">Purchase more credits to keep creating portraits.</p>
+                  <button
+                    onClick={() => setShowBuyModal(true)}
+                    className="mt-3 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                  >
+                    Buy Credits
+                  </button>
+                  {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
                 </div>
-                {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
-              </div>
+              )}
 
               {freeRemaining > 0 ? (
                 <button
