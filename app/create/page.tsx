@@ -725,10 +725,14 @@ function CreatePageInner() {
                 <p className="text-sm font-bold text-indigo-400">Want more portraits?</p>
                 <p className="text-xs text-slate-400 mt-1">Get more credits to try different sports and styles.</p>
                 <button
-                  onClick={() => setStep("details")}
-                  className="mt-3 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                  onClick={() => {
+                    const packs = (settings?.pricing?.length ? settings.pricing : DEFAULT_PRICING);
+                    if (packs.length > 0) handleBuyCredits(packs[0].id);
+                  }}
+                  disabled={checkoutLoading}
+                  className="mt-3 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-60 disabled:cursor-wait"
                 >
-                  Upgrade Now
+                  {checkoutLoading ? "Redirecting..." : "Upgrade Now"}
                 </button>
               </div>
 
