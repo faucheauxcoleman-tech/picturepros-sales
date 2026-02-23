@@ -359,7 +359,7 @@ function CreatePageInner() {
               <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
                 Upload or Snap a <span className="gradient-text">Photo</span>
               </h1>
-              <p className="text-slate-400 mt-2">Any photo works — game day, practice, or snap one right now!</p>
+              <p className="text-slate-400 mt-2">For best results, use a standing photo in uniform so we can match the jersey colors.</p>
               {error && (
                 <div className="mt-4 px-4 py-3 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 text-sm font-medium">
                   {error}
@@ -395,9 +395,9 @@ function CreatePageInner() {
                 </div>
                 <div>
                   <p className="text-base font-bold text-slate-300">
-                    <span className="text-indigo-400">Tap to choose a photo</span> or drag and drop
+                    <span className="text-indigo-400">Tap to upload</span> from camera roll or drag and drop
                   </p>
-                  <p className="text-sm text-slate-500 mt-1">JPG, PNG, HEIC — any photo from your camera roll</p>
+                  <p className="text-sm text-slate-500 mt-1">JPG, PNG, HEIC — any photo of your player in uniform</p>
                 </div>
               </div>
             </div>
@@ -425,14 +425,14 @@ function CreatePageInner() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
               </svg>
-              Take a Photo Now
+              Take a Live Photo Now
             </button>
 
             <div className="mt-6 grid grid-cols-3 gap-3 text-center">
               {[
-                { icon: "✓", label: "Works with any photo" },
-                { icon: "✓", label: "Phone camera quality is fine" },
-                { icon: "✓", label: "Full body or waist-up" },
+                { icon: "✓", label: "Standing in uniform works best" },
+                { icon: "✓", label: "Phone camera is perfect" },
+                { icon: "✓", label: "Full body or 3/4 shot" },
               ].map((tip) => (
                 <div key={tip.label} className="flex items-center gap-2 text-xs text-slate-500 justify-center">
                   <span className="text-emerald-500 font-bold">{tip.icon}</span>
