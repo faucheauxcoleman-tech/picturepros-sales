@@ -153,7 +153,7 @@ export default function Home() {
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/5 text-indigo-400 text-xs font-bold mb-8">
             <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-            AI-Powered — 1 Free Portrait
+            AI-Powered — Free Portraits
           </div>
 
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1] max-w-4xl mx-auto">
@@ -181,7 +181,7 @@ export default function Home() {
             </a>
           </div>
 
-          <p className="mt-4 text-xs text-slate-600">No credit card required. Try 1 portrait free.</p>
+          <p className="mt-4 text-xs text-slate-600">No credit card required. Try it free.</p>
 
           {/* Before/after showcase — placeholder for user-provided images */}
         </div>
@@ -244,7 +244,7 @@ export default function Home() {
             <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
               Start Free. <span className="gradient-text">Scale When Ready.</span>
             </h2>
-            <p className="text-slate-400 mt-4 max-w-lg mx-auto">Try 1 portrait free. No credit card needed. Upgrade when you want more.</p>
+            <p className="text-slate-400 mt-4 max-w-lg mx-auto">Try it free. No credit card needed. Upgrade when you want more.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
