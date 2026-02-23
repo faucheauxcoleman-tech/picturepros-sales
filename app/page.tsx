@@ -103,6 +103,8 @@ function buildPricingFromSettings(s: SalesSettings) {
     portraits: s.freePortraits,
   });
   // Paid tiers from admin settings
+  const descs = ["Great for trying it out", "Most popular for families", "Best value for teams", "For the superfan family"];
+  const ctas = ["Get Started", "Go Pro", "Best Deal", "Get Pack"];
   s.pricing.forEach((tier, i) => {
     const dollars = Math.floor(tier.price);
     const cents = Math.round((tier.price - dollars) * 100);
@@ -110,15 +112,15 @@ function buildPricingFromSettings(s: SalesSettings) {
       name: tier.name,
       price: `$${dollars}`,
       period: cents > 0 ? `.${cents.toString().padStart(2, "0")}` : "",
-      desc: i === 0 ? "Most popular for families" : "For the superfan family",
+      desc: tier.featured ? "Most popular for families" : (descs[i] || descs[descs.length - 1]),
       features: [
-        `${tier.portraits} AI portraits`,
+        `${tier.portraits} AI portrait${tier.portraits !== 1 ? 's' : ''}`,
         "All sports & styles",
         "HD resolution",
         ...(tier.portraits >= 10 ? ["Print-ready files"] : []),
         "Priority generation",
       ],
-      cta: tier.featured ? "Get Started" : "Go Pro",
+      cta: tier.featured ? "Go Pro" : (ctas[i] || ctas[ctas.length - 1]),
       highlight: tier.featured,
       packId: tier.id,
       portraits: tier.portraits,
@@ -385,7 +387,11 @@ export default function Home() {
             <p className="text-slate-400 mt-4 max-w-lg mx-auto">Try it free. No credit card needed. Upgrade when you want more.</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className={`grid grid-cols-1 gap-6 max-w-5xl mx-auto ${
+            pricing.length <= 3 ? 'sm:grid-cols-3 max-w-4xl' :
+            pricing.length === 4 ? 'sm:grid-cols-2 lg:grid-cols-4' :
+            'sm:grid-cols-2 lg:grid-cols-3'
+          }`}>
             {pricing.map((plan) => (
               <div
                 key={plan.name}
