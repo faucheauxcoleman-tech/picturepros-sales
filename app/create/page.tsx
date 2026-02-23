@@ -728,16 +728,27 @@ function CreatePageInner() {
               <div className="mt-4 p-4 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 text-center max-w-md">
                 <p className="text-sm font-bold text-indigo-400">Want more portraits?</p>
                 <p className="text-xs text-slate-400 mt-1">Get more credits to try different sports and styles.</p>
-                <button
-                  onClick={() => {
-                    const packs = (settings?.pricing?.length ? settings.pricing : DEFAULT_PRICING);
-                    if (packs.length > 0) handleBuyCredits(packs[0].id);
-                  }}
-                  disabled={checkoutLoading}
-                  className="mt-3 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-60 disabled:cursor-wait"
-                >
-                  {checkoutLoading ? "Redirecting..." : "Upgrade Now"}
-                </button>
+                <div className="mt-3 flex flex-col gap-2">
+                  {(settings?.pricing?.length ? settings.pricing : DEFAULT_PRICING).map((pack) => {
+                    const dollars = Math.floor(pack.price);
+                    const cents = Math.round((pack.price - dollars) * 100);
+                    const priceStr = `$${dollars}${cents > 0 ? `.${cents.toString().padStart(2, "0")}` : ""}`;
+                    return (
+                      <button
+                        key={pack.id}
+                        onClick={() => handleBuyCredits(pack.id)}
+                        disabled={checkoutLoading}
+                        className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-60 disabled:cursor-wait ${
+                          pack.featured
+                            ? "bg-indigo-600 hover:bg-indigo-500"
+                            : "bg-slate-800 hover:bg-slate-700 text-slate-300"
+                        }`}
+                      >
+                        {checkoutLoading ? "Redirecting..." : `${pack.name} — ${pack.portraits} credits — ${priceStr}`}
+                      </button>
+                    );
+                  })}
+                </div>
                 {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
               </div>
 

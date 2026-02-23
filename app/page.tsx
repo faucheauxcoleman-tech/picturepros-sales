@@ -62,6 +62,7 @@ const DEFAULT_PRICING = [
     cta: "Start Free",
     highlight: false,
     packId: "",
+    portraits: 1,
   },
   {
     name: "Starter Pack",
@@ -72,6 +73,7 @@ const DEFAULT_PRICING = [
     cta: "Get Started",
     highlight: false,
     packId: "pack-3",
+    portraits: 3,
   },
   {
     name: "Pro Pack",
@@ -82,6 +84,7 @@ const DEFAULT_PRICING = [
     cta: "Go Pro",
     highlight: true,
     packId: "pack-10",
+    portraits: 10,
   },
 ];
 
@@ -97,6 +100,7 @@ function buildPricingFromSettings(s: SalesSettings) {
     cta: "Start Free",
     highlight: false,
     packId: "",
+    portraits: s.freePortraits,
   });
   // Paid tiers from admin settings
   s.pricing.forEach((tier, i) => {
@@ -117,6 +121,7 @@ function buildPricingFromSettings(s: SalesSettings) {
       cta: tier.featured ? "Get Started" : "Go Pro",
       highlight: tier.featured,
       packId: tier.id,
+      portraits: tier.portraits,
     });
   });
   return plans;
@@ -462,7 +467,7 @@ export default function Home() {
                       : "bg-slate-800 hover:bg-slate-700 text-slate-300"
                   }`}
                 >
-                  {plan.name} — {plan.price}{plan.period}
+                  {plan.name} — {plan.portraits} credits — {plan.price}{plan.period}
                 </Link>
               ))}
             </div>
