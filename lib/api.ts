@@ -70,6 +70,21 @@ export async function fetchCredits(authToken: string): Promise<{ credits: number
   }
 }
 
+// Verify & fulfill purchase after Stripe redirect (fallback if webhook missed)
+export async function verifyPurchase(authToken: string): Promise<{ ok: boolean; fulfilled: boolean; credits: number; freeRemaining: number } | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/consumer/verify-purchase`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${authToken}`, "Content-Type": "application/json" },
+    });
+    const json = await res.json();
+    if (json.ok) return { ok: true, fulfilled: json.fulfilled, credits: json.credits, freeRemaining: json.freeRemaining };
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 // Create Stripe checkout session (requires auth)
 export async function createCheckout(authToken: string, packId: string): Promise<{ ok: boolean; url?: string; error?: string }> {
   try {

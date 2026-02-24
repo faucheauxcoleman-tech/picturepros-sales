@@ -3,7 +3,7 @@
 import React, { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { generatePortrait, fetchSettings, fetchCredits, createCheckout, type SalesSettings } from "@/lib/api";
+import { generatePortrait, fetchSettings, fetchCredits, createCheckout, verifyPurchase, type SalesSettings } from "@/lib/api";
 import { useAuth } from "@/lib/AuthContext";
 import { signOut } from "@/lib/firebase";
 import SignInModal from "@/components/SignInModal";
@@ -65,10 +65,77 @@ const DEFAULT_PRICING = [
 type Step = "sport" | "upload" | "uploading" | "details" | "generating" | "result";
 type CreativeMode = "card" | "portrait";
 
+function ConfettiOverlay() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const colors = ['#6366f1', '#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#3b82f6'];
+    const particles: { x: number; y: number; vx: number; vy: number; size: number; color: string; rotation: number; rotSpeed: number; opacity: number }[] = [];
+
+    for (let i = 0; i < 120; i++) {
+      particles.push({
+        x: canvas.width / 2 + (Math.random() - 0.5) * 200,
+        y: canvas.height / 2 - 100,
+        vx: (Math.random() - 0.5) * 16,
+        vy: Math.random() * -14 - 4,
+        size: Math.random() * 8 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 10,
+        opacity: 1,
+      });
+    }
+
+    let frame: number;
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let alive = false;
+      for (const p of particles) {
+        p.vy += 0.25;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= 0.99;
+        p.rotation += p.rotSpeed;
+        p.opacity -= 0.008;
+        if (p.opacity <= 0) continue;
+        alive = true;
+        ctx.save();
+        ctx.globalAlpha = p.opacity;
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+        ctx.restore();
+      }
+      if (alive) frame = requestAnimationFrame(animate);
+    };
+    frame = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 z-[300] pointer-events-none"
+      style={{ width: '100vw', height: '100vh' }}
+    />
+  );
+}
+
 function CreatePageInner() {
   const searchParams = useSearchParams();
   const sportParam = searchParams.get("sport");
   const buyParam = searchParams.get("buy");
+  const purchasedParam = searchParams.get("purchased");
   const { user } = useAuth();
   const [step, setStep] = useState<Step>(sportParam ? "upload" : "sport");
   const [creativeMode, setCreativeMode] = useState<CreativeMode>("card");
@@ -87,8 +154,11 @@ function CreatePageInner() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showBuyModal, setShowBuyModal] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const purchaseVerified = useRef(false);
 
   // Load settings on mount
   useEffect(() => {
@@ -120,6 +190,32 @@ function CreatePageInner() {
   useEffect(() => {
     if (user && showSignIn) setShowSignIn(false);
   }, [user, showSignIn]);
+
+  // After Stripe redirect: verify & fulfill purchase, then show confetti
+  useEffect(() => {
+    if (!purchasedParam || !user || purchaseVerified.current) return;
+    purchaseVerified.current = true;
+    (async () => {
+      try {
+        const token = await user.getIdToken();
+        const result = await verifyPurchase(token);
+        if (result) {
+          setFreeRemaining(result.freeRemaining);
+          setPaidCredits(result.credits);
+          setPurchaseMessage(`${result.credits} credits ready to use!`);
+          setShowConfetti(true);
+          setTimeout(() => setShowConfetti(false), 4000);
+          setTimeout(() => setPurchaseMessage(null), 5000);
+        } else {
+          // Webhook may have already handled it — just refresh
+          await refreshCredits();
+        }
+      } catch {
+        await refreshCredits();
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [purchasedParam, user]);
 
   // Auto-trigger checkout if user came from a paid pricing card (?buy=packId)
   const buyTriggered = useRef(false);
@@ -252,6 +348,26 @@ function CreatePageInner() {
           setTimeout(() => handleGenerate(), 300);
         }}
       />
+
+      {/* Confetti celebration */}
+      {showConfetti && <ConfettiOverlay />}
+
+      {/* Purchase success toast */}
+      {purchaseMessage && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] animate-in slide-in-from-top-4 fade-in duration-500">
+          <div className="bg-emerald-500/20 border border-emerald-500/30 backdrop-blur-xl rounded-2xl px-6 py-4 flex items-center gap-3 shadow-2xl shadow-emerald-500/10">
+            <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+              <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-black text-emerald-300">Payment Successful!</p>
+              <p className="text-xs text-emerald-400/70 font-bold">{purchaseMessage}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Buy Credits Modal */}
       {showBuyModal && (
