@@ -431,6 +431,22 @@ export default function Home() {
             pricing.length === 4 ? 'sm:grid-cols-2 lg:grid-cols-4' :
             'sm:grid-cols-2 lg:grid-cols-3'
           }`}>
+            {!pricing && [0, 1, 2].map((i) => (
+              <div key={i} className={`rounded-3xl p-8 flex flex-col animate-pulse ${i === 2 ? 'border-2 border-slate-700 bg-slate-800/30' : 'border border-slate-800 bg-slate-900/50'}`}>
+                <div className="h-4 w-24 bg-slate-800 rounded mb-4" />
+                <div className="h-10 w-20 bg-slate-800 rounded mb-2" />
+                <div className="h-3 w-40 bg-slate-800/60 rounded mb-6" />
+                <div className="space-y-3 flex-1">
+                  {[1, 2, 3, 4].map((j) => (
+                    <div key={j} className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-slate-800 rounded-full shrink-0" />
+                      <div className="h-3 bg-slate-800/60 rounded" style={{ width: `${60 + j * 10}%` }} />
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-8 h-12 bg-slate-800 rounded-xl" />
+              </div>
+            ))}
             {(pricing || []).map((plan) => (
               <div
                 key={plan.name}

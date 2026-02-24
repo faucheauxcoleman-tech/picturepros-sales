@@ -681,26 +681,54 @@ function CreatePageInner() {
 
         {/* Step 3: Generating */}
         {step === "generating" && (
-          <div className="animate-in fade-in duration-500 flex flex-col items-center justify-center py-20">
-            <div className="relative w-48 h-60 rounded-3xl bg-slate-900/50 border border-slate-800 overflow-hidden glow">
-              <div className="absolute inset-0 animate-shimmer" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
-                <div>
-                  <p className="text-sm font-black text-white text-center">Creating Portrait</p>
-                  <p className="text-[10px] text-slate-500 text-center mt-1">This takes about 20 seconds...</p>
+          <div className="animate-in fade-in duration-500 flex flex-col items-center justify-center py-16">
+            {/* Skeleton portrait card */}
+            <div className="relative w-52 sm:w-60 rounded-3xl bg-slate-900/80 border border-slate-700/50 overflow-hidden shadow-2xl shadow-indigo-500/10">
+              {/* Shimmer overlay */}
+              <div className="absolute inset-0 animate-shimmer z-10" />
+              {/* Skeleton content */}
+              <div className="aspect-[3/4] flex flex-col items-center justify-center p-6 gap-5">
+                {/* Head placeholder */}
+                <div className="w-16 h-16 rounded-full bg-slate-800 animate-pulse" />
+                {/* Body placeholder */}
+                <div className="w-20 h-24 rounded-xl bg-slate-800/60 animate-pulse" style={{ animationDelay: '150ms' }} />
+                {/* Legs placeholder */}
+                <div className="flex gap-3">
+                  <div className="w-6 h-12 rounded-lg bg-slate-800/40 animate-pulse" style={{ animationDelay: '300ms' }} />
+                  <div className="w-6 h-12 rounded-lg bg-slate-800/40 animate-pulse" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             </div>
-            {playerName && (
-              <p className="mt-6 text-sm text-slate-400 text-center">
-                Generating portrait for <span className="font-bold text-white">{playerName}</span>
-                {playerNumber && <> #{playerNumber}</>}
-              </p>
-            )}
-            <p className="mt-2 text-xs text-slate-600 text-center max-w-sm">
-              Our AI is analyzing your photo and generating a professional sports portrait. Hang tight!
-            </p>
+
+            {/* Status text */}
+            <div className="mt-8 flex flex-col items-center gap-2">
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+                <p className="text-sm font-black text-white">
+                  Creating {creativeMode === 'portrait' ? 'Portrait' : 'Player Card'}
+                </p>
+              </div>
+              {playerName && (
+                <p className="text-xs text-slate-400">
+                  for <span className="font-bold text-white">{playerName}</span>
+                  {playerNumber && <> #{playerNumber}</>}
+                </p>
+              )}
+              <p className="text-[10px] text-slate-600 mt-1">This usually takes about 20 seconds</p>
+            </div>
+
+            {/* Progress steps */}
+            <div className="mt-8 flex items-center gap-3">
+              {["Analyzing", "Composing", "Rendering"].map((label, i) => (
+                <div key={label} className="flex items-center gap-1.5">
+                  <div
+                    className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"
+                    style={{ animationDelay: `${i * 500}ms` }}
+                  />
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
