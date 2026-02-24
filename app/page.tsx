@@ -276,7 +276,7 @@ export default function Home() {
       </nav>
 
       {/* Hero */}
-      <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-32 overflow-hidden">
+      <section className="relative pt-32 pb-10 sm:pt-40 sm:pb-16 overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[120px]" />
           <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-cyan-500/8 rounded-full blur-[100px]" />
@@ -366,7 +366,7 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-20 sm:py-32">
+      <section id="how-it-works" className="pt-10 pb-20 sm:pt-16 sm:pb-32">
         <FadeIn>
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
@@ -397,7 +397,7 @@ export default function Home() {
       </section>
 
       {/* Social Proof */}
-      <section className="py-20 border-y border-white/5 bg-slate-900/20">
+      <section className="py-12 sm:py-16 border-y border-white/5 bg-slate-900/20">
         <FadeIn>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center">
           <div className="grid grid-cols-3 gap-8 max-w-lg mx-auto">
@@ -419,7 +419,7 @@ export default function Home() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 sm:py-28">
+      <section className="py-12 sm:py-16">
         <FadeIn>
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
@@ -470,7 +470,7 @@ export default function Home() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-20 sm:py-32">
+      <section id="pricing" className="py-12 sm:py-20">
         <FadeIn>
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
@@ -556,24 +556,6 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </div>
-        </FadeIn>
-      </section>
-
-      {/* Final CTA */}
-      <section className="py-20 sm:py-32">
-        <FadeIn>
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
-            Ready to See <span className="gradient-text">Your Kid as a Pro?</span>
-          </h2>
-          <p className="mt-4 text-slate-400 text-lg">It takes 30 seconds. Upload a photo and watch the magic happen.</p>
-          <button
-            onClick={handleCreateClick}
-            className="inline-block mt-8 px-10 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-base font-black uppercase tracking-wider transition-all hover:shadow-2xl hover:shadow-indigo-500/25 hover:-translate-y-0.5 cursor-pointer"
-          >
-            Get Started Now
-          </button>
         </div>
         </FadeIn>
       </section>
