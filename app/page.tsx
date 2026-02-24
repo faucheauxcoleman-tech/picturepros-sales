@@ -315,40 +315,51 @@ export default function Home() {
           <p className="mt-4 text-xs text-slate-600">No credit card required. Try it free.</p>
 
           {/* Before / After showcase */}
-          <div className="mt-16 sm:mt-20 max-w-xl mx-auto">
+          <div className="mt-16 sm:mt-20 max-w-2xl mx-auto">
             <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-6 text-center">See The Difference</p>
-            <div className="grid grid-cols-2 gap-3 sm:gap-5">
-              {/* Before */}
+            <div className="grid grid-cols-3 gap-3 sm:gap-4 items-end">
+              {/* Before — original photo */}
               <div className="relative group">
                 <div className="absolute -inset-1 rounded-2xl bg-slate-700/20 blur-xl group-hover:bg-slate-600/30 transition-all" />
                 <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 aspect-[3/4]">
-                  <img
-                    src="/assets/before-after/Before1.png"
-                    alt="Original photo"
-                    className="w-full h-full object-cover"
-                  />
+                  <img src="/assets/before-after/Before1.png" alt="Original photo" className="w-full h-full object-cover" />
                   <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2 sm:p-3">
-                    <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-wider text-slate-400">Before</span>
+                    <span className="text-[8px] sm:text-[11px] font-black uppercase tracking-wider text-slate-400">Original</span>
                   </div>
                 </div>
               </div>
-              {/* After */}
+              {/* After — Player Card */}
               <div className="relative group">
                 <div className="absolute -inset-1 rounded-2xl bg-indigo-500/10 blur-xl group-hover:bg-indigo-500/20 transition-all" />
                 <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-indigo-500/20 bg-slate-900 aspect-[3/4]">
-                  <img
-                    src="/assets/before-after/After1.png"
-                    alt="AI-generated portrait"
-                    className="w-full h-full object-contain"
-                  />
+                  <img src="/assets/before-after/After1.png" alt="AI Player Card" className="w-full h-full object-contain" />
                   <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2 sm:p-3">
-                    <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-wider gradient-text">After — AI Portrait</span>
+                    <span className="text-[8px] sm:text-[11px] font-black uppercase tracking-wider gradient-text">Player Card</span>
+                  </div>
+                </div>
+              </div>
+              {/* After — Individual Portrait */}
+              <div className="relative group">
+                <div className="absolute -inset-1 rounded-2xl bg-violet-500/10 blur-xl group-hover:bg-violet-500/20 transition-all" />
+                <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-violet-500/20 bg-slate-900 aspect-[3/4]">
+                  <img src="/assets/before-after/After1_2.png" alt="AI Individual Portrait" className="w-full h-full object-cover" />
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2 sm:p-3">
+                    <span className="text-[8px] sm:text-[11px] font-black uppercase tracking-wider text-violet-400">Portrait</span>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="flex justify-center mt-3">
-              <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Powered by AI</span>
+            {/* Flow arrow labels */}
+            <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-2">
+              <div className="text-center">
+                <span className="text-[8px] sm:text-[9px] font-bold text-slate-600 uppercase tracking-widest">Upload</span>
+              </div>
+              <div className="text-center">
+                <span className="text-[8px] sm:text-[9px] font-bold text-indigo-500/60 uppercase tracking-widest">AI Style 1</span>
+              </div>
+              <div className="text-center">
+                <span className="text-[8px] sm:text-[9px] font-bold text-violet-500/60 uppercase tracking-widest">AI Style 2</span>
+              </div>
             </div>
           </div>
         </div>
