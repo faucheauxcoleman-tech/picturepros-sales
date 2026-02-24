@@ -7,6 +7,7 @@ import { generatePortrait, fetchSettings, fetchCredits, createCheckout, type Sal
 import { useAuth } from "@/lib/AuthContext";
 import { signOut } from "@/lib/firebase";
 import SignInModal from "@/components/SignInModal";
+import AccountDropdown from "@/components/AccountDropdown";
 
 // Compress image from File using Object URLs (Safari-safe, avoids huge data URLs in memory)
 function compressFile(file: File, maxDim = 1024, quality = 0.7): Promise<string> {
@@ -305,12 +306,12 @@ function CreatePageInner() {
       {/* Header */}
       <nav className="border-b border-white/5 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center shrink-0">
             <img src="/assets/logo/PP%20LOGO%20AI.png" alt="Picture Pros" className="h-9 sm:h-10" />
           </Link>
 
           {/* Step indicator */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 mx-2 overflow-x-auto">
             {(["mode", "sport", "upload", "details", "result"] as const).map((s, i) => {
               const labels = ["Style", "Sport", "Photo", "Details", "Portrait"];
               const stepOrder: Record<Step, number> = { mode: 0, sport: 1, upload: 2, uploading: 2, details: 3, generating: 4, result: 5 };
@@ -319,9 +320,9 @@ function CreatePageInner() {
               const isActive = (s === "result" && step === "generating") || (s === "upload" && step === "uploading") || step === s;
               const isDone = thisOrder < currentOrder && !(s === "result" && step === "generating");
               return (
-                <div key={s} className="flex items-center gap-2">
-                  {i > 0 && <div className={`w-6 h-px ${isDone ? "bg-indigo-500" : "bg-slate-800"}`} />}
-                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${
+                <div key={s} className="flex items-center gap-1 sm:gap-2">
+                  {i > 0 && <div className={`w-3 sm:w-6 h-px ${isDone ? "bg-indigo-500" : "bg-slate-800"}`} />}
+                  <div className={`flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
                     isDone ? "bg-indigo-500/10 text-indigo-400" : isActive ? "bg-slate-800 text-white" : "text-slate-600"
                   }`}>
                     {isDone ? (
@@ -336,6 +337,20 @@ function CreatePageInner() {
                 </div>
               );
             })}
+          </div>
+
+          {/* Account */}
+          <div className="shrink-0">
+            {user ? (
+              <AccountDropdown credits={totalCredits} onBuyCredits={() => setShowBuyModal(true)} />
+            ) : (
+              <button
+                onClick={() => setShowSignIn(true)}
+                className="text-xs sm:text-sm text-slate-400 hover:text-white transition whitespace-nowrap"
+              >
+                Sign In
+              </button>
+            )}
           </div>
         </div>
       </nav>

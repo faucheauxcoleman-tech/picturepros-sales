@@ -7,6 +7,7 @@ import { fetchSettings, fetchCredits, createCheckout, SalesSettings } from "@/li
 import { useAuth } from "@/lib/AuthContext";
 import { signOut } from "@/lib/firebase";
 import SignInModal from "@/components/SignInModal";
+import AccountDropdown from "@/components/AccountDropdown";
 
 const SPORTS = [
   { name: "Soccer", emoji: "⚽" },
@@ -244,27 +245,17 @@ export default function Home() {
             <a href="#pricing" className="hidden sm:block text-sm text-slate-400 hover:text-white transition">Pricing</a>
             <a href="#how-it-works" className="hidden sm:block text-sm text-slate-400 hover:text-white transition">How It Works</a>
             {user ? (
-              <div className="flex items-center gap-3">
-                {totalCredits !== null && (
-                  <span className="text-xs font-bold text-slate-400 bg-slate-800 px-3 py-1 rounded-full">
-                    {totalCredits} credit{totalCredits !== 1 ? "s" : ""}
-                  </span>
-                )}
+              <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   onClick={handleCreateClick}
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-full text-sm font-bold transition-all hover:shadow-lg hover:shadow-indigo-500/25"
+                  className="px-4 sm:px-5 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-full text-sm font-bold transition-all hover:shadow-lg hover:shadow-indigo-500/25"
                 >
                   Create
                 </button>
-                <button
-                  onClick={() => signOut()}
-                  className="text-sm text-slate-400 hover:text-white transition"
-                >
-                  Sign Out
-                </button>
+                <AccountDropdown credits={totalCredits} onBuyCredits={() => setShowBuyCredits(true)} />
               </div>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   onClick={() => setShowSignIn(true)}
                   className="text-sm text-slate-400 hover:text-white transition"
@@ -273,7 +264,7 @@ export default function Home() {
                 </button>
                 <Link
                   href="/create"
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-full text-sm font-bold transition-all hover:shadow-lg hover:shadow-indigo-500/25"
+                  className="px-4 sm:px-5 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-full text-sm font-bold transition-all hover:shadow-lg hover:shadow-indigo-500/25"
                 >
                   Try Free
                 </Link>
