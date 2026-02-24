@@ -331,8 +331,8 @@ export default function Home() {
               {/* After — Player Card */}
               <div className="relative group">
                 <div className="absolute -inset-1 rounded-2xl bg-indigo-500/10 blur-xl group-hover:bg-indigo-500/20 transition-all" />
-                <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-indigo-500/20 bg-slate-900 aspect-[3/4]">
-                  <img src="/assets/before-after/After1.png" alt="AI Player Card" className="w-full h-full object-contain" />
+                <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-indigo-500/20 bg-slate-900 aspect-[9/16]">
+                  <img src="/assets/before-after/After1.png" alt="AI Player Card" className="w-full h-full object-cover" />
                   <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2 sm:p-3">
                     <span className="text-[8px] sm:text-[11px] font-black uppercase tracking-wider gradient-text">Player Card</span>
                   </div>
