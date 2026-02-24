@@ -319,12 +319,18 @@ function CreatePageInner() {
               const currentOrder = stepOrder[step];
               const isActive = (s === "result" && step === "generating") || (s === "upload" && step === "uploading") || step === s;
               const isDone = thisOrder < currentOrder && !(s === "result" && step === "generating");
+              const isClickable = isDone && step !== "generating";
               return (
                 <div key={s} className="flex items-center gap-1 sm:gap-2">
                   {i > 0 && <div className={`w-3 sm:w-6 h-px ${isDone ? "bg-indigo-500" : "bg-slate-800"}`} />}
-                  <div className={`flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
-                    isDone ? "bg-indigo-500/10 text-indigo-400" : isActive ? "bg-slate-800 text-white" : "text-slate-600"
-                  }`}>
+                  <button
+                    type="button"
+                    disabled={!isClickable}
+                    onClick={() => isClickable && setStep(s)}
+                    className={`flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+                      isDone ? "bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 cursor-pointer" : isActive ? "bg-slate-800 text-white cursor-default" : "text-slate-600 cursor-default"
+                    } disabled:cursor-default`}
+                  >
                     {isDone ? (
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -333,7 +339,7 @@ function CreatePageInner() {
                       <span>{i + 1}</span>
                     )}
                     <span className="hidden sm:inline">{labels[i]}</span>
-                  </div>
+                  </button>
                 </div>
               );
             })}
