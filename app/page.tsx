@@ -494,20 +494,17 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 py-12">
+      <footer className="border-t border-white/5 py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-indigo-600 rounded-md flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
-              </svg>
-            </div>
-            <span className="text-sm font-bold text-slate-500">Picture Pros AI</span>
-          </div>
           <p className="text-xs text-slate-600">&copy; {new Date().getFullYear()} Picture Pros. All rights reserved.</p>
+          <div className="flex items-center gap-6 text-xs text-slate-600">
+            <Link href="/privacy" className="hover:text-slate-400 transition">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-slate-400 transition">Terms of Service</Link>
+            <a href="mailto:faucheauxcoleman@gmail.com" className="hover:text-slate-400 transition">Contact</a>
+          </div>
         </div>
       </footer>
+
       <SignInModal
         open={showSignIn}
         onClose={() => { setShowSignIn(false); setPendingAction(null); }}
@@ -515,6 +512,7 @@ export default function Home() {
       />
 
       {/* Buy Credits Modal */}
+
       {showBuyCredits && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowBuyCredits(false)} />
