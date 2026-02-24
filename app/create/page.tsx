@@ -231,76 +231,10 @@ function CreatePageInner() {
   const canGenerate = !!uploadedImage && !!selectedSport && !!playerName.trim() && !!playerNumber.trim() && (user ? totalCredits > 0 : true);
 
   // Composite player info onto portrait via canvas
+  // Pass through the AI-generated image as-is (the frame already contains name/number)
   const compositePortrait = useCallback((imgSrc: string): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d')!;
-        ctx.drawImage(img, 0, 0);
-
-        const w = canvas.width;
-        const h = canvas.height;
-        const scale = w / 800; // base scale factor
-
-        // Dark gradient overlay at bottom for text readability
-        const grad = ctx.createLinearGradient(0, h * 0.7, 0, h);
-        grad.addColorStop(0, 'rgba(0,0,0,0)');
-        grad.addColorStop(0.5, 'rgba(0,0,0,0.6)');
-        grad.addColorStop(1, 'rgba(0,0,0,0.85)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, h * 0.7, w, h * 0.3);
-
-        // Player number - big, right side
-        if (playerNumber.trim()) {
-          const numSize = Math.round(72 * scale);
-          ctx.font = `900 ${numSize}px "Arial Black", Arial, sans-serif`;
-          ctx.textAlign = 'right';
-          ctx.fillStyle = 'rgba(255,255,255,0.15)';
-          ctx.fillText(`#${playerNumber.trim()}`, w - 20 * scale, h - 20 * scale);
-        }
-
-        // Player name - bottom left
-        if (playerName.trim()) {
-          const nameSize = Math.round(28 * scale);
-          ctx.font = `800 ${nameSize}px "Arial Black", Arial, sans-serif`;
-          ctx.textAlign = 'left';
-          ctx.fillStyle = 'white';
-          ctx.shadowColor = 'rgba(0,0,0,0.8)';
-          ctx.shadowBlur = 6 * scale;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 2 * scale;
-          ctx.fillText(playerName.trim().toUpperCase(), 24 * scale, h - 24 * scale);
-          ctx.shadowBlur = 0;
-          ctx.shadowOffsetY = 0;
-        }
-
-        // Number + position line - above name
-        const subParts: string[] = [];
-        if (playerNumber.trim()) subParts.push(`#${playerNumber.trim()}`);
-        if (playerPosition.trim()) subParts.push(playerPosition.trim());
-        const sportObj = SPORT_OPTIONS.find(s => s.id === selectedSport);
-        if (sportObj) subParts.push(sportObj.label);
-        if (subParts.length > 0) {
-          const subSize = Math.round(14 * scale);
-          ctx.font = `700 ${subSize}px Arial, sans-serif`;
-          ctx.textAlign = 'left';
-          ctx.fillStyle = 'rgba(255,255,255,0.7)';
-          ctx.shadowColor = 'rgba(0,0,0,0.6)';
-          ctx.shadowBlur = 4 * scale;
-          ctx.fillText(subParts.join('  ·  '), 24 * scale, h - 56 * scale);
-          ctx.shadowBlur = 0;
-        }
-
-        resolve(canvas.toDataURL('image/png'));
-      };
-      img.onerror = () => resolve(imgSrc);
-      img.src = imgSrc;
-    });
-  }, [playerName, playerNumber, playerPosition, selectedSport]);
+    return Promise.resolve(imgSrc);
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-950">
@@ -736,28 +670,48 @@ function CreatePageInner() {
                     const url = generatedImages[0];
                     if (!url) return;
                     const fileName = `${(playerName || "portrait").replace(/\s+/g, "_")}_portrait.png`;
+                    // Convert data URL to blob for reliable downloads
+                    let blob: Blob;
                     try {
                       const res = await fetch(url);
-                      const blob = await res.blob();
-                      const file = new File([blob], fileName, { type: blob.type || "image/png" });
-                      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        await navigator.share({ files: [file], title: fileName });
-                        return;
-                      }
-                    } catch { /* share cancelled or unsupported, fall through */ }
+                      blob = await res.blob();
+                    } catch {
+                      // Fallback: direct anchor download
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = fileName;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      return;
+                    }
+                    // On mobile/touch devices, try native share (camera roll save)
+                    const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+                    if (isMobile && navigator.canShare) {
+                      try {
+                        const file = new File([blob], fileName, { type: blob.type || "image/png" });
+                        if (navigator.canShare({ files: [file] })) {
+                          await navigator.share({ files: [file], title: fileName });
+                          return;
+                        }
+                      } catch { /* share cancelled, fall through to download */ }
+                    }
+                    // Desktop: blob URL triggers a real file download
+                    const blobUrl = URL.createObjectURL(blob);
                     const a = document.createElement("a");
-                    a.href = url;
+                    a.href = blobUrl;
                     a.download = fileName;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
                   }}
                   className="px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                   </svg>
-                  Save Image
+                  Download Image
                 </button>
                 <button className="px-8 py-3 rounded-xl border border-slate-700 hover:border-slate-500 font-bold text-sm text-slate-300 transition-all flex items-center justify-center gap-2">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
