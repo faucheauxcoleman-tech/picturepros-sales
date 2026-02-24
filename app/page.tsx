@@ -535,15 +535,15 @@ export default function Home() {
             We offer bulk pricing, white-label solutions, and custom integrations for leagues,
             tournaments, and sports photography businesses.
           </p>
-          <a
-            href="mailto:faucheauxcoleman@gmail.com?subject=Enterprise%20Inquiry%20-%20Picture%20Pros"
+          <Link
+            href="/enterprise"
             className="inline-flex items-center gap-2 mt-6 px-8 py-3 border border-slate-700 hover:border-indigo-500/50 rounded-xl text-sm font-bold text-slate-300 hover:text-white transition-all hover:bg-indigo-500/5"
           >
+            Learn More
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
             </svg>
-            Contact Us for Enterprise Solutions
-          </a>
+          </Link>
         </div>
       </section>
 
