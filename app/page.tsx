@@ -240,7 +240,7 @@ export default function Home() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center">
-            <img src="/assets/logo/PP%20LOGO%20AI.png" alt="Picture Pros" className="h-10 sm:h-11" />
+            <img src="/assets/logo/PP%20LOGO%20AI.png" alt="Picture Pros" className="h-10 sm:h-11 animate-logo" />
           </div>
           <div className="flex items-center gap-4">
             <a href="#pricing" className="hidden sm:block text-sm text-slate-400 hover:text-white transition">Pricing</a>
