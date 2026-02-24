@@ -61,14 +61,16 @@ const DEFAULT_PRICING = [
   { id: "pack-10", name: "Pro", portraits: 10, price: 12.99, featured: true },
 ];
 
-type Step = "sport" | "upload" | "uploading" | "details" | "generating" | "result";
+type Step = "mode" | "sport" | "upload" | "uploading" | "details" | "generating" | "result";
+type CreativeMode = "card" | "portrait";
 
 function CreatePageInner() {
   const searchParams = useSearchParams();
   const sportParam = searchParams.get("sport");
   const buyParam = searchParams.get("buy");
   const { user } = useAuth();
-  const [step, setStep] = useState<Step>(sportParam ? "upload" : "sport");
+  const [step, setStep] = useState<Step>(sportParam ? "upload" : "mode");
+  const [creativeMode, setCreativeMode] = useState<CreativeMode>("card");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedSport, setSelectedSport] = useState<string | null>(sportParam);
   const [dragOver, setDragOver] = useState(false);
@@ -186,7 +188,8 @@ function CreatePageInner() {
         playerName.trim(),
         playerNumber.trim(),
         playerPosition.trim() || undefined,
-        token
+        token,
+        creativeMode
       );
       if (result.ok && result.data) {
         const composited = await compositePortrait(result.data);
@@ -308,9 +311,9 @@ function CreatePageInner() {
 
           {/* Step indicator */}
           <div className="flex items-center gap-2">
-            {(["sport", "upload", "details", "result"] as const).map((s, i) => {
-              const labels = ["Sport", "Photo", "Details", "Portrait"];
-              const stepOrder: Record<Step, number> = { sport: 0, upload: 1, uploading: 1, details: 2, generating: 3, result: 4 };
+            {(["mode", "sport", "upload", "details", "result"] as const).map((s, i) => {
+              const labels = ["Style", "Sport", "Photo", "Details", "Portrait"];
+              const stepOrder: Record<Step, number> = { mode: 0, sport: 1, upload: 2, uploading: 2, details: 3, generating: 4, result: 5 };
               const thisOrder = stepOrder[s];
               const currentOrder = stepOrder[step];
               const isActive = (s === "result" && step === "generating") || (s === "upload" && step === "uploading") || step === s;
@@ -338,10 +341,71 @@ function CreatePageInner() {
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
-        {/* Step 0: Sport Selection */}
+        {/* Step 0: Mode Selection */}
+        {step === "mode" && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="text-center mb-10">
+              <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
+                What Would You Like to <span className="gradient-text">Create</span>?
+              </h1>
+              <p className="text-slate-400 mt-2">Choose a style for your AI-generated portrait.</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+              {/* Player Card option */}
+              <button
+                onClick={() => { setCreativeMode('card'); setStep('sport'); }}
+                className="group relative rounded-3xl border-2 border-white/10 hover:border-indigo-500/50 bg-slate-900/60 overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/10 p-8 text-left"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/5 to-violet-600/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative z-10">
+                  <div className="w-16 h-16 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center mb-5">
+                    <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H3.75A2.25 2.25 0 001.5 6.75v10.5A2.25 2.25 0 003.75 21z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-black text-white mb-2">Player Card</h3>
+                  <p className="text-sm text-slate-400 leading-relaxed">A premium sports trading card with a stylish border/frame, player name, and number built into the design.</p>
+                  <div className="mt-5 flex items-center gap-2 text-indigo-400 text-xs font-bold group-hover:translate-x-1 transition-transform">
+                    <span>Select</span>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+                  </div>
+                </div>
+              </button>
+
+              {/* Individual Portrait option */}
+              <button
+                onClick={() => { setCreativeMode('portrait'); setStep('sport'); }}
+                className="group relative rounded-3xl border-2 border-white/10 hover:border-violet-500/50 bg-slate-900/60 overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-violet-500/10 p-8 text-left"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-violet-600/5 to-pink-600/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative z-10">
+                  <div className="w-16 h-16 rounded-2xl bg-violet-600/10 border border-violet-500/20 flex items-center justify-center mb-5">
+                    <svg className="w-8 h-8 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-black text-white mb-2">Individual Portrait</h3>
+                  <p className="text-sm text-slate-400 leading-relaxed">A clean, professional sports portrait with dramatic lighting and a blurred background — no card frame.</p>
+                  <div className="mt-5 flex items-center gap-2 text-violet-400 text-xs font-bold group-hover:translate-x-1 transition-transform">
+                    <span>Select</span>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 1: Sport Selection */}
         {step === "sport" && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-700 bg-slate-800/50 text-xs font-bold mb-4">
+                <span>{creativeMode === 'card' ? '🃏' : '📸'}</span>
+                <span className="text-slate-300">{creativeMode === 'card' ? 'Player Card' : 'Individual Portrait'}</span>
+                <button onClick={() => setStep('mode')} className="text-slate-500 hover:text-slate-300 underline underline-offset-2 ml-1 transition">Change</button>
+              </div>
               <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
                 Pick Your <span className="gradient-text">Sport</span>
               </h1>
@@ -737,7 +801,7 @@ function CreatePageInner() {
 
               {freeRemaining > 0 ? (
                 <button
-                  onClick={() => { setStep(sportParam ? "upload" : "sport"); setUploadedImage(null); setSelectedSport(sportParam); setGeneratedImages([]); setPlayerName(""); setPlayerNumber(""); setPlayerPosition(""); setError(null); }}
+                  onClick={() => { setStep("mode"); setUploadedImage(null); setSelectedSport(sportParam); setGeneratedImages([]); setPlayerName(""); setPlayerNumber(""); setPlayerPosition(""); setError(null); }}
                   className="mt-2 text-sm text-slate-500 hover:text-slate-300 transition"
                 >
                   Create Another Portrait

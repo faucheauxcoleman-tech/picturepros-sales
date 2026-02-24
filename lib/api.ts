@@ -23,7 +23,8 @@ export async function generatePortrait(
   playerName?: string,
   playerNumber?: string,
   playerPosition?: string,
-  authToken?: string
+  authToken?: string,
+  mode?: string
 ): Promise<{ ok: boolean; data?: string; error?: string; backend?: string }> {
   let res: Response;
   try {
@@ -34,7 +35,7 @@ export async function generatePortrait(
         "Content-Type": "application/json",
         ...(authToken ? { "Authorization": `Bearer ${authToken}` } : {}),
       },
-      body: JSON.stringify({ photoBase64, sport, playerName, playerNumber, playerPosition }),
+      body: JSON.stringify({ photoBase64, sport, playerName, playerNumber, playerPosition, mode }),
     });
   } catch (e) {
     return { ok: false, error: `Network error: ${e instanceof Error ? e.message : 'Failed to reach server'}` };
