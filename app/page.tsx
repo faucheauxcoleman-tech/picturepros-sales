@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { signOut } from "@/lib/firebase";
 import SignInModal from "@/components/SignInModal";
 import AccountDropdown from "@/components/AccountDropdown";
+import FadeIn from "@/components/FadeIn";
 
 const SPORTS = [
   { name: "Soccer", emoji: "⚽" },
@@ -366,6 +367,7 @@ export default function Home() {
 
       {/* How It Works */}
       <section id="how-it-works" className="py-20 sm:py-32">
+        <FadeIn>
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
             <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-3">How It Works</p>
@@ -391,10 +393,12 @@ export default function Home() {
             ))}
           </div>
         </div>
+        </FadeIn>
       </section>
 
       {/* Social Proof */}
       <section className="py-20 border-y border-white/5 bg-slate-900/20">
+        <FadeIn>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center">
           <div className="grid grid-cols-3 gap-8 max-w-lg mx-auto">
             <div>
@@ -411,10 +415,12 @@ export default function Home() {
             </div>
           </div>
         </div>
+        </FadeIn>
       </section>
 
       {/* Pricing */}
       <section id="pricing" className="py-20 sm:py-32">
+        <FadeIn>
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
             <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-3">Pricing</p>
@@ -500,10 +506,12 @@ export default function Home() {
             ))}
           </div>
         </div>
+        </FadeIn>
       </section>
 
       {/* Final CTA */}
       <section className="py-20 sm:py-32">
+        <FadeIn>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
             Ready to See <span className="gradient-text">Your Kid as a Pro?</span>
@@ -516,10 +524,12 @@ export default function Home() {
             Get Started Now
           </button>
         </div>
+        </FadeIn>
       </section>
 
       {/* Enterprise CTA */}
       <section className="border-t border-white/5 py-16 sm:py-20 bg-gradient-to-b from-transparent to-slate-900/40">
+        <FadeIn>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-700 bg-slate-800/50 text-xs font-bold text-slate-400 mb-6">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -544,6 +554,7 @@ export default function Home() {
             </svg>
           </Link>
         </div>
+        </FadeIn>
       </section>
 
       {/* Footer */}
@@ -551,6 +562,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-slate-600">&copy; {new Date().getFullYear()} Picture Pros. All rights reserved.</p>
           <div className="flex items-center gap-6 text-xs text-slate-600">
+            <Link href="/tips" className="hover:text-slate-400 transition">Photo Tips</Link>
             <Link href="/privacy" className="hover:text-slate-400 transition">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-slate-400 transition">Terms of Service</Link>
             <a href="mailto:faucheauxcoleman@gmail.com" className="hover:text-slate-400 transition">Contact</a>
