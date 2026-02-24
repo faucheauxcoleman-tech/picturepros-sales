@@ -314,7 +314,44 @@ export default function Home() {
 
           <p className="mt-4 text-xs text-slate-600">No credit card required. Try it free.</p>
 
-          {/* Before/after showcase — placeholder for user-provided images */}
+          {/* Before / After showcase */}
+          <div className="mt-16 sm:mt-20 max-w-3xl mx-auto">
+            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-6 text-center">See The Difference</p>
+            <div className="grid grid-cols-2 gap-4 sm:gap-6">
+              {/* Before */}
+              <div className="relative group">
+                <div className="absolute -inset-1 rounded-3xl bg-slate-700/20 blur-xl group-hover:bg-slate-600/30 transition-all" />
+                <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-800 bg-slate-900">
+                  <img
+                    src="/assets/before-after/Before1.png"
+                    alt="Original photo"
+                    className="w-full aspect-[3/4] object-cover"
+                  />
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3 sm:p-4">
+                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400">Before</span>
+                  </div>
+                </div>
+              </div>
+              {/* After */}
+              <div className="relative group">
+                <div className="absolute -inset-1 rounded-3xl bg-indigo-500/10 blur-xl group-hover:bg-indigo-500/20 transition-all" />
+                <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-indigo-500/20 bg-slate-900">
+                  <img
+                    src="/assets/before-after/After1.png"
+                    alt="AI-generated portrait"
+                    className="w-full aspect-[3/4] object-cover"
+                  />
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3 sm:p-4">
+                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider gradient-text">After — AI Portrait</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Arrow between */}
+            <div className="flex justify-center mt-4">
+              <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Powered by AI</span>
+            </div>
+          </div>
         </div>
       </section>
 
