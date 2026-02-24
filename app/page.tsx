@@ -297,25 +297,8 @@ export default function Home() {
             sports portrait in seconds. No studio visit needed.
           </p>
 
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button
-              onClick={handleCreateClick}
-              className="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-base font-black uppercase tracking-wider transition-all hover:shadow-2xl hover:shadow-indigo-500/25 hover:-translate-y-0.5 cursor-pointer"
-            >
-              Create Your Portrait — Free
-            </button>
-            <a
-              href="#how-it-works"
-              className="w-full sm:w-auto px-8 py-4 border border-slate-700 hover:border-slate-500 rounded-2xl text-base font-bold text-slate-300 transition-all hover:bg-slate-900"
-            >
-              See How It Works
-            </a>
-          </div>
-
-          <p className="mt-4 text-xs text-slate-600">No credit card required. Try it free.</p>
-
           {/* Before / After showcase */}
-          <div className="mt-16 sm:mt-20 max-w-2xl mx-auto">
+          <div className="mt-12 sm:mt-16 max-w-2xl mx-auto">
             <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-6 text-center">See The Difference</p>
             <div className="grid grid-cols-3 gap-3 sm:gap-4 items-end">
               {/* Before — original photo */}
@@ -362,6 +345,22 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={handleCreateClick}
+              className="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-base font-black uppercase tracking-wider transition-all hover:shadow-2xl hover:shadow-indigo-500/25 hover:-translate-y-0.5 cursor-pointer"
+            >
+              Create Your Portrait — Free
+            </button>
+            <a
+              href="#how-it-works"
+              className="w-full sm:w-auto px-8 py-4 border border-slate-700 hover:border-slate-500 rounded-2xl text-base font-bold text-slate-300 transition-all hover:bg-slate-900"
+            >
+              See How It Works
+            </a>
+          </div>
+          <p className="mt-4 text-xs text-slate-600">No credit card required. Try it free.</p>
         </div>
       </section>
 
