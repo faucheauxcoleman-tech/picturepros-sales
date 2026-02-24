@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { fetchSettings, fetchCredits, createCheckout, SalesSettings } from "@/lib/api";
@@ -9,6 +9,33 @@ import { signOut } from "@/lib/firebase";
 import SignInModal from "@/components/SignInModal";
 import AccountDropdown from "@/components/AccountDropdown";
 import FadeIn from "@/components/FadeIn";
+
+function HeroTypewriter() {
+  const full = "Turn Any Photo Into a ";
+  const gradient = "Pro Sports Portrait";
+  const [charIndex, setCharIndex] = useState(0);
+  const total = full.length + gradient.length;
+  const done = charIndex >= total;
+
+  useEffect(() => {
+    if (done) return;
+    const speed = charIndex < full.length ? 35 : 40;
+    const t = setTimeout(() => setCharIndex(i => i + 1), speed);
+    return () => clearTimeout(t);
+  }, [charIndex, done]);
+
+  const visibleMain = full.slice(0, Math.min(charIndex, full.length));
+  const gradientChars = charIndex > full.length ? charIndex - full.length : 0;
+  const visibleGradient = gradient.slice(0, gradientChars);
+
+  return (
+    <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1] max-w-4xl mx-auto">
+      {visibleMain}
+      {gradientChars > 0 && <span className="gradient-text">{visibleGradient}</span>}
+      {!done && <span className="inline-block w-[3px] h-[0.85em] bg-indigo-400 ml-1 align-middle animate-pulse" />}
+    </h1>
+  );
+}
 
 const SPORTS = [
   { name: "Soccer", emoji: "⚽" },
@@ -288,10 +315,7 @@ export default function Home() {
             AI-Powered — Free Portraits
           </div>
 
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1] max-w-4xl mx-auto">
-            Turn Any Photo Into a{" "}
-            <span className="gradient-text">Pro Sports Portrait</span>
-          </h1>
+          <HeroTypewriter />
 
           <p className="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
             Upload a photo of your kid. Our AI creates a stunning, professional-quality
