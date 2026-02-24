@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { auth, onAuthStateChanged, type User } from "./firebase";
+import { auth, onAuthStateChanged, handleRedirectResult, type User } from "./firebase";
 
 interface AuthContextType {
   user: User | null;
@@ -19,6 +19,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
       return;
     }
+    // Pick up redirect result (from signInWithRedirect in embedded browsers)
+    handleRedirectResult().catch(() => {});
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);

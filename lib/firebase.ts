@@ -3,6 +3,8 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
@@ -32,8 +34,38 @@ try {
   console.warn("[firebase] init skipped (build/prerender)");
 }
 
+// Detect embedded webviews that block Google OAuth popups
+export function isEmbeddedWebview(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  return /FBAN|FBAV|Instagram|Line\/|Twitter|Snapchat|BytedanceWebview|TikTok|Musical|MicroMessenger|WeChat/i.test(ua);
+}
+
 export async function signInWithGoogle() {
-  return signInWithPopup(auth!, googleProvider!);
+  if (isEmbeddedWebview()) {
+    // Redirect flow works in embedded browsers where popups are blocked
+    return signInWithRedirect(auth!, googleProvider!);
+  }
+  try {
+    return await signInWithPopup(auth!, googleProvider!);
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code || '';
+    // If popup is blocked/disallowed, fall back to redirect
+    if (code.includes('popup-blocked') || code.includes('popup-closed') || code.includes('unauthorized-domain') || code.includes('web-storage-unsupported')) {
+      return signInWithRedirect(auth!, googleProvider!);
+    }
+    throw err;
+  }
+}
+
+// Handle redirect result (called on page load after redirect flow)
+export async function handleRedirectResult() {
+  if (!auth) return null;
+  try {
+    return await getRedirectResult(auth);
+  } catch {
+    return null;
+  }
 }
 
 export async function signInWithEmail(email: string, password: string) {
