@@ -315,41 +315,40 @@ export default function Home() {
           <p className="mt-4 text-xs text-slate-600">No credit card required. Try it free.</p>
 
           {/* Before / After showcase */}
-          <div className="mt-16 sm:mt-20 max-w-3xl mx-auto">
+          <div className="mt-16 sm:mt-20 max-w-xl mx-auto">
             <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-6 text-center">See The Difference</p>
-            <div className="grid grid-cols-2 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 gap-3 sm:gap-5">
               {/* Before */}
               <div className="relative group">
-                <div className="absolute -inset-1 rounded-3xl bg-slate-700/20 blur-xl group-hover:bg-slate-600/30 transition-all" />
-                <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-800 bg-slate-900">
+                <div className="absolute -inset-1 rounded-2xl bg-slate-700/20 blur-xl group-hover:bg-slate-600/30 transition-all" />
+                <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 aspect-[3/4]">
                   <img
                     src="/assets/before-after/Before1.png"
                     alt="Original photo"
-                    className="w-full aspect-[3/4] object-cover"
+                    className="w-full h-full object-cover"
                   />
-                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3 sm:p-4">
-                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400">Before</span>
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2 sm:p-3">
+                    <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-wider text-slate-400">Before</span>
                   </div>
                 </div>
               </div>
               {/* After */}
               <div className="relative group">
-                <div className="absolute -inset-1 rounded-3xl bg-indigo-500/10 blur-xl group-hover:bg-indigo-500/20 transition-all" />
-                <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-indigo-500/20 bg-slate-900">
+                <div className="absolute -inset-1 rounded-2xl bg-indigo-500/10 blur-xl group-hover:bg-indigo-500/20 transition-all" />
+                <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-indigo-500/20 bg-slate-900 aspect-[3/4]">
                   <img
                     src="/assets/before-after/After1.png"
                     alt="AI-generated portrait"
-                    className="w-full aspect-[3/4] object-cover"
+                    className="w-full h-full object-contain"
                   />
-                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3 sm:p-4">
-                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider gradient-text">After — AI Portrait</span>
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2 sm:p-3">
+                    <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-wider gradient-text">After — AI Portrait</span>
                   </div>
                 </div>
               </div>
             </div>
-            {/* Arrow between */}
-            <div className="flex justify-center mt-4">
-              <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Powered by AI</span>
+            <div className="flex justify-center mt-3">
+              <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Powered by AI</span>
             </div>
           </div>
         </div>
@@ -490,6 +489,34 @@ export default function Home() {
           >
             Get Started Now
           </button>
+        </div>
+      </section>
+
+      {/* Enterprise CTA */}
+      <section className="border-t border-white/5 py-16 sm:py-20 bg-gradient-to-b from-transparent to-slate-900/40">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-700 bg-slate-800/50 text-xs font-bold text-slate-400 mb-6">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+            </svg>
+            Enterprise
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
+            Need Portraits for Your <span className="gradient-text">Entire League?</span>
+          </h2>
+          <p className="mt-3 text-slate-400 text-sm sm:text-base max-w-xl mx-auto">
+            We offer bulk pricing, white-label solutions, and custom integrations for leagues,
+            tournaments, and sports photography businesses.
+          </p>
+          <a
+            href="mailto:faucheauxcoleman@gmail.com?subject=Enterprise%20Inquiry%20-%20Picture%20Pros"
+            className="inline-flex items-center gap-2 mt-6 px-8 py-3 border border-slate-700 hover:border-indigo-500/50 rounded-xl text-sm font-bold text-slate-300 hover:text-white transition-all hover:bg-indigo-500/5"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+            </svg>
+            Contact Us for Enterprise Solutions
+          </a>
         </div>
       </section>
 
