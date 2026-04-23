@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Terms of Service | Picture Pros",
-  description: "Terms of Service for Picture Pros AI portrait generation service.",
+  title: "Terms of Service | Royal Paws",
+  description: "Terms of Service for Royal Paws AI pet portrait generation service.",
 };
 
 export default function TermsPage() {
@@ -11,7 +11,7 @@ export default function TermsPage() {
       <nav className="border-b border-white/5 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center">
           <Link href="/" className="flex items-center">
-            <img src="/assets/logo/PP%20LOGO%20AI.png" alt="Picture Pros" className="h-9 sm:h-10" />
+            <span className="text-xl font-black tracking-tight">👑 Royal Paws</span>
           </Link>
         </div>
       </nav>
@@ -24,8 +24,8 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-bold text-white mb-3">1. Acceptance of Terms</h2>
             <p>
-              By accessing or using Picture Pros (&quot;the Service&quot;) at{" "}
-              <strong className="text-white">picturepros.ai</strong>, you agree to be bound by these Terms of
+              By accessing or using Royal Paws (&quot;the Service&quot;) at{" "}
+              <strong className="text-white">royalpaws.ai</strong>, you agree to be bound by these Terms of
               Service. If you do not agree to these terms, please do not use the Service.
             </p>
           </section>
@@ -33,8 +33,8 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-bold text-white mb-3">2. Description of Service</h2>
             <p>
-              Picture Pros provides AI-powered sports portrait generation. Users upload photos and provide
-              player details, and our AI generates stylized sports portraits. The Service offers both free
+              Royal Paws provides AI-powered pet portrait generation. Users upload photos of their pets,
+              and our AI generates stunning stylized portraits. The Service offers both free
               and paid tiers through a credit-based system.
             </p>
           </section>
@@ -122,7 +122,7 @@ export default function TermsPage() {
             <h2 className="text-lg font-bold text-white mb-3">8. Limitation of Liability</h2>
             <p>
               The Service is provided &quot;as is&quot; and &quot;as available&quot; without warranties of any
-              kind, either express or implied. To the fullest extent permitted by law, Picture Pros shall not
+              kind, either express or implied. To the fullest extent permitted by law, Royal Paws shall not
               be liable for any indirect, incidental, special, consequential, or punitive damages arising from
               your use of the Service. Our total liability shall not exceed the amount you paid to us in the
               12 months preceding the claim.

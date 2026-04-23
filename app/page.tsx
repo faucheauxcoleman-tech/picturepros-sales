@@ -10,49 +10,28 @@ import SignInModal from "@/components/SignInModal";
 import AccountDropdown from "@/components/AccountDropdown";
 import FadeIn from "@/components/FadeIn";
 
-function HeroTypewriter() {
-  const full = "Turn Any Photo Into a ";
-  const gradient = "Pro Sports Portrait";
-  const [charIndex, setCharIndex] = useState(0);
-  const total = full.length + gradient.length;
-  const done = charIndex >= total;
-
-  useEffect(() => {
-    if (done) return;
-    const speed = charIndex < full.length ? 35 : 40;
-    const t = setTimeout(() => setCharIndex(i => i + 1), speed);
-    return () => clearTimeout(t);
-  }, [charIndex, done]);
-
-  const visibleMain = full.slice(0, Math.min(charIndex, full.length));
-  const gradientChars = charIndex > full.length ? charIndex - full.length : 0;
-  const visibleGradient = gradient.slice(0, gradientChars);
-
+function HeroHeadline() {
   return (
     <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1] max-w-4xl mx-auto">
-      {visibleMain}
-      {gradientChars > 0 && <span className="gradient-text">{visibleGradient}</span>}
-      {!done && <span className="inline-block w-[3px] h-[0.85em] bg-indigo-400 ml-1 align-middle animate-pulse" />}
+      Turn Any Pet Photo Into a <span className="gradient-text">Royal Portrait</span>
     </h1>
   );
 }
 
-const SPORTS = [
-  { name: "Soccer", emoji: "⚽" },
-  { name: "Basketball", emoji: "🏀" },
-  { name: "Baseball", emoji: "⚾" },
-  { name: "Football", emoji: "🏈" },
-  { name: "Volleyball", emoji: "🏐" },
-  { name: "Softball", emoji: "🥎" },
-  { name: "Lacrosse", emoji: "🥍" },
-  { name: "Hockey", emoji: "🏒" },
+const PET_STYLES = [
+  { name: "Royal Monarch", emoji: "\u{1F451}" },
+  { name: "Military General", emoji: "\u{2694}\uFE0F" },
+  { name: "Renaissance Noble", emoji: "\u{1F3DB}\uFE0F" },
+  { name: "Wizard Sorcerer", emoji: "\u{1FA84}" },
+  { name: "Astronaut Explorer", emoji: "\u{1F680}" },
+  { name: "Flower Garden", emoji: "\u{1F338}" },
 ];
 
 const STEPS = [
   {
     num: "01",
-    title: "Pick a Sport",
-    desc: "Choose a sport and portrait style. Soccer, basketball, baseball — we've got them all with pro-quality backgrounds.",
+    title: "Pick a Style",
+    desc: "Choose a portrait style for your pet. Royal monarch, military general, wizard — we have them all with stunning detail.",
     icon: (
       <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
@@ -62,7 +41,7 @@ const STEPS = [
   {
     num: "02",
     title: "Upload a Photo",
-    desc: "Snap a pic or upload from your camera roll. Any casual photo works — game day, practice, or backyard.",
+    desc: "Snap a pic or upload from your camera roll. Any clear photo of your dog, cat, or pet works perfectly.",
     icon: (
       <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
@@ -72,7 +51,7 @@ const STEPS = [
   {
     num: "03",
     title: "Get Your Portrait",
-    desc: "AI generates a stunning pro-quality portrait in seconds. Download instantly or order prints delivered to your door.",
+    desc: "AI generates a stunning royal portrait of your pet in seconds. Download instantly or order prints delivered to your door.",
     icon: (
       <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
@@ -87,7 +66,7 @@ const DEFAULT_PRICING = [
     price: "$0",
     period: "",
     desc: "See the magic for yourself",
-    features: ["1 free AI portrait", "Any sport or style", "Instant download", "Standard resolution"],
+    features: ["Free AI portraits", "All portrait styles", "Instant download", "Standard resolution"],
     cta: "Start Free",
     highlight: false,
     packId: "",
@@ -98,7 +77,7 @@ const DEFAULT_PRICING = [
     price: "$4",
     period: ".99",
     desc: "Great for trying it out",
-    features: ["3 AI portraits", "All sports & styles", "HD resolution", "Priority generation"],
+    features: ["3 AI portraits", "All portrait styles", "HD resolution", "Priority generation"],
     cta: "Get Started",
     highlight: false,
     packId: "pack-3",
@@ -108,8 +87,8 @@ const DEFAULT_PRICING = [
     name: "Pro Pack",
     price: "$12",
     period: ".99",
-    desc: "Most popular for families",
-    features: ["10 AI portraits", "All sports & styles", "HD resolution", "Multiple poses", "Priority generation"],
+    desc: "Most popular for pet owners",
+    features: ["10 AI portraits", "All portrait styles", "HD resolution", "Multiple poses", "Priority generation"],
     cta: "Go Pro",
     highlight: true,
     packId: "pack-10",
@@ -125,14 +104,14 @@ function buildPricingFromSettings(s: SalesSettings) {
     price: "$0",
     period: "",
     desc: "See the magic for yourself",
-    features: [`${s.freePortraits} free AI portrait${s.freePortraits !== 1 ? 's' : ''}`, "Any sport or style", "Instant download", "Standard resolution"],
+    features: [`${s.freePortraits} free AI portrait${s.freePortraits !== 1 ? 's' : ''}`, "All portrait styles", "Instant download", "Standard resolution"],
     cta: "Start Free",
     highlight: false,
     packId: "",
     portraits: s.freePortraits,
   });
   // Paid tiers from admin settings
-  const descs = ["Great for trying it out", "Most popular for families", "Best value for teams", "For the superfan family"];
+  const descs = ["Great for trying it out", "Most popular for pet owners", "Best value for multiple pets", "For the ultimate pet lover"];
   const ctas = ["Get Started", "Go Pro", "Best Deal", "Get Pack"];
   s.pricing.forEach((tier, i) => {
     const dollars = Math.floor(tier.price);
@@ -141,10 +120,10 @@ function buildPricingFromSettings(s: SalesSettings) {
       name: tier.name,
       price: `$${dollars}`,
       period: cents > 0 ? `.${cents.toString().padStart(2, "0")}` : "",
-      desc: tier.featured ? "Most popular for families" : (descs[i] || descs[descs.length - 1]),
+      desc: tier.featured ? "Most popular for pet owners" : (descs[i] || descs[descs.length - 1]),
       features: [
         `${tier.portraits} AI portrait${tier.portraits !== 1 ? 's' : ''}`,
-        "All sports & styles",
+        "All portrait styles",
         "HD resolution",
         ...(tier.portraits >= 10 ? ["Print-ready files"] : []),
         "Priority generation",
@@ -180,7 +159,7 @@ export default function Home() {
     try {
       const token = await user.getIdToken();
       const data = await fetchCredits(token);
-      if (data) setTotalCredits(data.freeRemaining + data.credits);
+      if (data) setTotalCredits(data.freeRemaining + data.credits + (data.bonusCredits || 0));
     } catch { /* ignore */ }
   }, [user]);
 
@@ -202,7 +181,7 @@ export default function Home() {
         try {
           const token = await user.getIdToken();
           const data = await fetchCredits(token);
-          const credits = data ? data.freeRemaining + data.credits : 0;
+          const credits = data ? data.freeRemaining + data.credits + (data.bonusCredits || 0) : 0;
           setTotalCredits(credits);
           if (credits > 0) {
             router.push("/create");
@@ -249,7 +228,7 @@ export default function Home() {
     try {
       const token = await user.getIdToken();
       const data = await fetchCredits(token);
-      const credits = data ? data.freeRemaining + data.credits : 0;
+      const credits = data ? data.freeRemaining + data.credits + (data.bonusCredits || 0) : 0;
       setTotalCredits(credits);
       if (credits > 0) {
         router.push("/create");
@@ -267,10 +246,9 @@ export default function Home() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center">
-            <img src="/assets/logo/PP%20LOGO%20AI.png" alt="Picture Pros" className="h-10 sm:h-11 animate-logo" />
+            <span className="text-xl font-black tracking-tight">👑 Royal Paws</span>
           </div>
           <div className="flex items-center gap-4">
-            <a href="#pricing" className="hidden sm:block text-sm text-slate-400 hover:text-white transition">Pricing</a>
             <a href="#how-it-works" className="hidden sm:block text-sm text-slate-400 hover:text-white transition">How It Works</a>
             {user ? (
               <div className="flex items-center gap-2 sm:gap-3">
@@ -294,7 +272,7 @@ export default function Home() {
                   href="/create"
                   className="px-4 sm:px-5 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-full text-sm font-bold transition-all hover:shadow-lg hover:shadow-indigo-500/25"
                 >
-                  Try Free
+                  Get Started
                 </Link>
               </div>
             )}
@@ -315,77 +293,71 @@ export default function Home() {
             AI-Powered — Free Portraits
           </div>
 
-          <HeroTypewriter />
+          <HeroHeadline />
 
           <p className="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Upload a photo of your kid. Our AI creates a stunning, professional-quality
-            sports portrait in seconds. No studio visit needed.
+            Upload a photo of your dog, cat, or any pet. Our AI creates a stunning,
+            royal-quality portrait in seconds. No studio visit needed.
           </p>
 
-          {/* Before / After showcase */}
-          <div className="mt-12 sm:mt-16 max-w-2xl mx-auto">
-            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-6 text-center">See The Difference</p>
-            <div className="grid grid-cols-3 gap-3 sm:gap-4 items-end">
-              {/* Before — original photo */}
-              <div className="relative group">
-                <div className="absolute -inset-1 rounded-2xl bg-slate-700/20 blur-xl group-hover:bg-slate-600/30 transition-all" />
-                <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 aspect-[3/4]">
-                  <div className="absolute top-0 inset-x-0 z-10 bg-gradient-to-b from-black/70 to-transparent p-2 sm:p-3">
-                    <span className="text-[8px] sm:text-[11px] font-black uppercase tracking-wider text-slate-400">Original</span>
+          {/* Single CTA */}
+          <div className="mt-10">
+            <button
+              onClick={handleCreateClick}
+              className="w-full sm:w-auto px-10 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-full text-base font-black uppercase tracking-wider transition-all hover:shadow-2xl hover:shadow-indigo-500/25 hover:-translate-y-0.5 cursor-pointer inline-flex items-center justify-center gap-2"
+            >
+              Create Pet Portrait Free
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+            </button>
+          </div>
+          <p className="mt-4 text-xs text-slate-500">No credit card required. Your first portrait is free.</p>
+
+          {/* Trust indicators */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+            <span className="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold">
+              <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>
+              Secure
+            </span>
+            <span className="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold">
+              <svg className="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+              4.9 Stars
+            </span>
+            <span className="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold">
+              <svg className="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg>
+              Free Shipping
+            </span>
+            <span className="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold">
+              <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
+              Ready in 60s
+            </span>
+          </div>
+
+          {/* AI Sample showcase — all 6 styles */}
+          <div className="mt-14 sm:mt-20 max-w-5xl mx-auto">
+            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-6 text-center">Available Styles</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-5">
+              {[
+                { name: "Royal Monarch", file: "royal.png" },
+                { name: "Military General", file: "military.png" },
+                { name: "Renaissance Noble", file: "renaissance.png" },
+                { name: "Wizard Sorcerer", file: "wizard.png" },
+                { name: "Astronaut Explorer", file: "astronaut.png" },
+                { name: "Flower Garden", file: "flower.png" },
+              ].map((style) => (
+                <div key={style.name} className="relative group">
+                  <div className="absolute -inset-1 rounded-2xl bg-indigo-500/5 blur-xl group-hover:bg-indigo-500/15 transition-all" />
+                  <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 group-hover:border-indigo-500/30 group-hover:-translate-y-1 transition-all">
+                    <img src={`/assets/samples/${style.file}`} alt={`${style.name} AI Portrait`} className="w-full aspect-square object-cover" />
+                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3 sm:p-4">
+                      <p className="text-xs sm:text-sm font-black text-white">{style.name}</p>
+                      <p className="text-[9px] sm:text-[10px] text-slate-400">AI Generated</p>
+                    </div>
                   </div>
-                  <img src="/assets/before-after/Before1.png" alt="Original photo" className="w-full h-full object-cover" />
                 </div>
-              </div>
-              {/* After — Player Card */}
-              <div className="relative group">
-                <div className="absolute -inset-1 rounded-2xl bg-indigo-500/10 blur-xl group-hover:bg-indigo-500/20 transition-all" />
-                <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-indigo-500/20 bg-slate-900 aspect-[9/16]">
-                  <div className="absolute top-0 inset-x-0 z-10 bg-gradient-to-b from-black/70 to-transparent p-2 sm:p-3">
-                    <span className="text-[8px] sm:text-[11px] font-black uppercase tracking-wider gradient-text">Player Card</span>
-                  </div>
-                  <img src="/assets/before-after/After1.png" alt="AI Player Card" className="w-full h-full object-cover" />
-                </div>
-              </div>
-              {/* After — Individual Portrait */}
-              <div className="relative group">
-                <div className="absolute -inset-1 rounded-2xl bg-violet-500/10 blur-xl group-hover:bg-violet-500/20 transition-all" />
-                <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-violet-500/20 bg-slate-900 aspect-[3/4]">
-                  <div className="absolute top-0 inset-x-0 z-10 bg-gradient-to-b from-black/70 to-transparent p-2 sm:p-3">
-                    <span className="text-[8px] sm:text-[11px] font-black uppercase tracking-wider text-violet-400">Portrait</span>
-                  </div>
-                  <img src="/assets/before-after/After1_2.png" alt="AI Individual Portrait" className="w-full h-full object-cover" />
-                </div>
-              </div>
-            </div>
-            {/* Flow arrow labels */}
-            <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-2">
-              <div className="text-center">
-                <span className="text-[8px] sm:text-[9px] font-bold text-slate-600 uppercase tracking-widest">Upload</span>
-              </div>
-              <div className="text-center">
-                <span className="text-[8px] sm:text-[9px] font-bold text-indigo-500/60 uppercase tracking-widest">AI Style 1</span>
-              </div>
-              <div className="text-center">
-                <span className="text-[8px] sm:text-[9px] font-bold text-violet-500/60 uppercase tracking-widest">AI Style 2</span>
-              </div>
+              ))}
             </div>
           </div>
 
-          <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button
-              onClick={handleCreateClick}
-              className="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-base font-black uppercase tracking-wider transition-all hover:shadow-2xl hover:shadow-indigo-500/25 hover:-translate-y-0.5 cursor-pointer"
-            >
-              Create Your Portrait — Free
-            </button>
-            <a
-              href="#how-it-works"
-              className="w-full sm:w-auto px-8 py-4 border border-slate-700 hover:border-slate-500 rounded-2xl text-base font-bold text-slate-300 transition-all hover:bg-slate-900"
-            >
-              See How It Works
-            </a>
-          </div>
-          <p className="mt-4 text-xs text-slate-600">No credit card required. Try it free.</p>
         </div>
       </section>
 
@@ -430,8 +402,8 @@ export default function Home() {
               <p className="text-xs text-slate-500 font-bold mt-1">Portraits Created</p>
             </div>
             <div>
-              <p className="text-3xl sm:text-4xl font-black gradient-text">8+</p>
-              <p className="text-xs text-slate-500 font-bold mt-1">Sports</p>
+              <p className="text-3xl sm:text-4xl font-black gradient-text">6</p>
+              <p className="text-xs text-slate-500 font-bold mt-1">Royal Styles</p>
             </div>
             <div>
               <p className="text-3xl sm:text-4xl font-black gradient-text">&lt;30s</p>
@@ -447,29 +419,29 @@ export default function Home() {
         <FadeIn>
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
-            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-3">What Parents Say</p>
+            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-3">What Pet Owners Say</p>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
-              Real Families. <span className="gradient-text">Real Results.</span>
+              Real Pets. <span className="gradient-text">Real Results.</span>
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {[
               {
-                quote: "My daughter's soccer portrait looks like it was taken by a professional studio. I literally just used a photo from practice. This is insane.",
+                quote: "My golden retriever looks like actual royalty. I used a random photo from the backyard and it came out looking like a Renaissance painting. Incredible.",
                 name: "Jessica M.",
-                detail: "Soccer Mom · Louisiana",
+                detail: "Dog Mom · Louisiana",
                 stars: 5,
               },
               {
-                quote: "We skipped picture day this year and honestly the AI portrait came out better than the ones we've paid $40+ for in the past. Not even close.",
+                quote: "I got my cat done as a military general and I've never laughed so hard. It's now framed above the fireplace. Worth every penny.",
                 name: "Marcus T.",
-                detail: "Baseball Dad · Texas",
+                detail: "Cat Dad · Texas",
                 stars: 5,
               },
               {
-                quote: "I was skeptical but tried the free one and immediately bought the 10-pack. Did all three of my kids in different sports. So easy.",
+                quote: "I was skeptical but tried the free one and immediately bought the 10-pack. Did all three of my pets in different styles. So easy.",
                 name: "Sarah K.",
-                detail: "Mom of 3 · Florida",
+                detail: "Pet Mom of 3 · Florida",
                 stars: 5,
               },
             ].map((t) => (
@@ -584,40 +556,11 @@ export default function Home() {
         </FadeIn>
       </section>
 
-      {/* Enterprise CTA */}
-      <section className="border-t border-white/5 py-16 sm:py-20 bg-gradient-to-b from-transparent to-slate-900/40">
-        <FadeIn>
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-700 bg-slate-800/50 text-xs font-bold text-slate-400 mb-6">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
-            </svg>
-            Enterprise
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
-            Need Portraits for Your <span className="gradient-text">Entire League?</span>
-          </h2>
-          <p className="mt-3 text-slate-400 text-sm sm:text-base max-w-xl mx-auto">
-            We offer bulk pricing, white-label solutions, and custom integrations for leagues,
-            tournaments, and sports photography businesses.
-          </p>
-          <Link
-            href="/enterprise"
-            className="inline-flex items-center gap-2 mt-6 px-8 py-3 border border-slate-700 hover:border-indigo-500/50 rounded-xl text-sm font-bold text-slate-300 hover:text-white transition-all hover:bg-indigo-500/5"
-          >
-            Learn More
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-            </svg>
-          </Link>
-        </div>
-        </FadeIn>
-      </section>
 
       {/* Footer */}
       <footer className="border-t border-white/5 py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-slate-600">&copy; {new Date().getFullYear()} Picture Pros. All rights reserved.</p>
+          <p className="text-xs text-slate-600">&copy; {new Date().getFullYear()} Royal Paws. All rights reserved.</p>
           <div className="flex items-center gap-6 text-xs text-slate-600">
             <Link href="/tips" className="hover:text-slate-400 transition">Photo Tips</Link>
             <Link href="/privacy" className="hover:text-slate-400 transition">Privacy Policy</Link>
@@ -652,8 +595,8 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
               </svg>
             </div>
-            <h2 className="text-xl font-black tracking-tight">No Credits Remaining</h2>
-            <p className="text-sm text-slate-400 mt-2">Purchase a credit pack to continue creating portraits.</p>
+            <h2 className="text-xl font-black tracking-tight">{(totalCredits ?? 0) > 0 ? 'Buy More Credits' : 'No Credits Remaining'}</h2>
+            <p className="text-sm text-slate-400 mt-2">{(totalCredits ?? 0) > 0 ? 'Add more credits to your account.' : 'Purchase a credit pack to continue creating portraits.'}</p>
             <div className="mt-6 space-y-2">
               {(pricing || []).filter(p => p.packId).map((plan) => (
                 <button

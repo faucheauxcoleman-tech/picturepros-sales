@@ -2,8 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Enterprise — Picture Pros AI",
-  description: "Custom AI portrait workflows for leagues, tournaments, and sports photography businesses. Built by volume sports photographers.",
+  title: "Enterprise — Royal Paws AI",
+  description: "Custom AI pet portrait workflows for pet shops, groomers, shelters, and pet photography businesses.",
 };
 
 const FEATURES = [
@@ -49,7 +49,7 @@ const FEATURES = [
 const TRUST = [
   {
     title: "Built by Volume Photographers",
-    desc: "We're not a tech company pretending to understand photography. Picture Pros was built from inside the sports photography industry — by people who've shot thousands of athletes at tournaments, leagues, and picture days.",
+    desc: "We're not a tech company pretending to understand pets. Royal Paws was built by pet lovers who know what makes a great pet portrait — and combined that passion with cutting-edge AI technology.",
     icon: (
       <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
@@ -116,7 +116,7 @@ export default function EnterprisePage() {
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="mailto:sales@picturepros.com?subject=Enterprise%20Inquiry%20-%20Picture%20Pros"
+              href="mailto:faucheauxcoleman@gmail.com?subject=Enterprise%20Inquiry%20-%20Royal%20Paws"
               className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-sm font-black uppercase tracking-wider transition-all hover:shadow-2xl hover:shadow-indigo-500/25 hover:-translate-y-0.5"
             >
               Get in Touch
@@ -162,7 +162,7 @@ export default function EnterprisePage() {
       <section className="py-20 sm:py-28 border-t border-white/5 bg-gradient-to-b from-transparent to-slate-900/30">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
-            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mb-3">Why Picture Pros</p>
+            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mb-3">Why Royal Paws</p>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
               We Know This <span className="gradient-text">Business</span>
             </h2>
@@ -225,7 +225,7 @@ export default function EnterprisePage() {
             Whether you shoot 500 athletes a year or 50,000 — we&apos;ll build the right solution for your business.
           </p>
           <a
-            href="mailto:sales@picturepros.com?subject=Enterprise%20Inquiry%20-%20Picture%20Pros"
+            href="mailto:faucheauxcoleman@gmail.com?subject=Enterprise%20Inquiry%20-%20Royal%20Paws"
             className="inline-flex items-center gap-2 mt-8 px-10 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-base font-black uppercase tracking-wider transition-all hover:shadow-2xl hover:shadow-indigo-500/25 hover:-translate-y-0.5"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -233,18 +233,18 @@ export default function EnterprisePage() {
             </svg>
             Get in Touch
           </a>
-          <p className="mt-4 text-xs text-slate-600">sales@picturepros.com</p>
+          <p className="mt-4 text-xs text-slate-600">faucheauxcoleman@gmail.com</p>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-white/5 py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-slate-600">&copy; {new Date().getFullYear()} Picture Pros. All rights reserved.</p>
+          <p className="text-xs text-slate-600">&copy; {new Date().getFullYear()} Royal Paws. All rights reserved.</p>
           <div className="flex items-center gap-6 text-xs text-slate-600">
             <Link href="/privacy" className="hover:text-slate-400 transition">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-slate-400 transition">Terms of Service</Link>
-            <a href="mailto:sales@picturepros.com" className="hover:text-slate-400 transition">Contact</a>
+            <a href="mailto:faucheauxcoleman@gmail.com" className="hover:text-slate-400 transition">Contact</a>
           </div>
         </div>
       </footer>

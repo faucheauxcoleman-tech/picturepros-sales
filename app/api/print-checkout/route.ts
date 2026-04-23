@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const maxDuration = 120; // Allow up to 2 minutes for portrait generation
-
 export async function POST(req: NextRequest) {
   const backendUrl =
     process.env.API_URL ||
@@ -14,15 +12,11 @@ export async function POST(req: NextRequest) {
     const authHeader = req.headers.get("authorization");
     if (authHeader) headers["Authorization"] = authHeader;
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120000); // 2 min timeout
-    const backendRes = await fetch(`${backendUrl}/api/consumer/portrait`, {
+    const backendRes = await fetch(`${backendUrl}/api/consumer/print-checkout`, {
       method: "POST",
       headers,
       body,
-      signal: controller.signal,
     });
-    clearTimeout(timeout);
 
     let data;
     try {
@@ -36,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(data, { status: backendRes.status });
   } catch (err) {
-    console.error("[api/generate] proxy error:", err);
+    console.error("[api/print-checkout] proxy error:", err);
     return NextResponse.json(
       { error: { message: err instanceof Error ? err.message : "Proxy error" } },
       { status: 502 }

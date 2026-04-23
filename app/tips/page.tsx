@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Photo Tips — Picture Pros AI",
+  title: "Photo Tips — Royal Paws AI",
   description: "Get the best AI portrait results. Simple tips for uploading the perfect photo.",
 };
 
@@ -188,11 +188,11 @@ export default function TipsPage() {
       {/* Footer */}
       <footer className="border-t border-white/5 py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-slate-600">&copy; {new Date().getFullYear()} Picture Pros. All rights reserved.</p>
+          <p className="text-xs text-slate-600">&copy; {new Date().getFullYear()} Royal Paws. All rights reserved.</p>
           <div className="flex items-center gap-6 text-xs text-slate-600">
             <Link href="/privacy" className="hover:text-slate-400 transition">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-slate-400 transition">Terms of Service</Link>
-            <a href="mailto:sales@picturepros.com" className="hover:text-slate-400 transition">Contact</a>
+            <a href="mailto:faucheauxcoleman@gmail.com" className="hover:text-slate-400 transition">Contact</a>
           </div>
         </div>
       </footer>

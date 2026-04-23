@@ -1,10 +1,10 @@
 @echo off
 setlocal enabledelayedexpansion
-echo === Deploying Picture Pros Sales Site to Cloud Run ===
+echo === Deploying Royal Paws to Cloud Run ===
 
 set PROJECT=colemans-ai-database
 set REGION=us-central1
-set SERVICE=picturepros-sales
+set SERVICE=royal-paws
 set API_URL=https://studio.picturepros.ai
 
 REM Read Firebase + Stripe config from internal tool's .env.local

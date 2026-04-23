@@ -29,6 +29,7 @@ try {
   app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
   auth = getAuth(app);
   googleProvider = new GoogleAuthProvider();
+  googleProvider.setCustomParameters({ prompt: 'select_account' });
 } catch {
   // Firebase init fails during build/prerender — that's OK
   console.warn("[firebase] init skipped (build/prerender)");
@@ -48,13 +49,10 @@ export async function signInWithGoogle() {
   }
   try {
     return await signInWithPopup(auth!, googleProvider!);
-  } catch (err: unknown) {
-    const code = (err as { code?: string })?.code || '';
-    // If popup is blocked/disallowed, fall back to redirect
-    if (code.includes('popup-blocked') || code.includes('popup-closed') || code.includes('unauthorized-domain') || code.includes('web-storage-unsupported')) {
-      return signInWithRedirect(auth!, googleProvider!);
-    }
-    throw err;
+  } catch {
+    // Any popup failure (blocked, closed, cancelled, third-party cookie issues)
+    // → fall back to redirect flow which is more reliable
+    return signInWithRedirect(auth!, googleProvider!);
   }
 }
 

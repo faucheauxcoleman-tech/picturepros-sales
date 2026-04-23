@@ -37,7 +37,7 @@ export default function NotFound() {
 
       {/* Logo */}
       <div className="mt-16 opacity-30">
-        <span className="text-xs font-black uppercase tracking-[0.3em] text-slate-600">Picture Pros</span>
+        <span className="text-xs font-black uppercase tracking-[0.3em] text-slate-600">Royal Paws</span>
       </div>
     </div>
   );

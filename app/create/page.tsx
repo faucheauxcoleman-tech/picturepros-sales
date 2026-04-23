@@ -3,11 +3,13 @@
 import React, { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { generatePortrait, fetchSettings, fetchCredits, createCheckout, verifyPurchase, type SalesSettings } from "@/lib/api";
+import { generatePortrait, fetchSettings, fetchCredits, createCheckout, createPrintCheckout, verifyPurchase, fetchGallery, proxyImageUrl, type SalesSettings, type GalleryItem } from "@/lib/api";
 import { useAuth } from "@/lib/AuthContext";
 import { signOut } from "@/lib/firebase";
 import SignInModal from "@/components/SignInModal";
 import AccountDropdown from "@/components/AccountDropdown";
+import { trackLead, trackViewContent, trackPurchase } from "@/lib/pixel";
+import OTOModal from "@/components/OTOModal";
 
 // Compress image from File using Object URLs (Safari-safe, avoids huge data URLs in memory)
 function compressFile(file: File, maxDim = 1024, quality = 0.7): Promise<string> {
@@ -44,26 +46,21 @@ function compressFile(file: File, maxDim = 1024, quality = 0.7): Promise<string>
   });
 }
 
-const SPORT_OPTIONS = [
-  { id: "soccer", label: "Soccer", emoji: "⚽", bg: "from-emerald-600/20 to-emerald-900/30", border: "border-emerald-500/30", text: "text-emerald-400" },
-  { id: "basketball", label: "Basketball", emoji: "🏀", bg: "from-orange-600/20 to-orange-900/30", border: "border-orange-500/30", text: "text-orange-400" },
-  { id: "baseball", label: "Baseball", emoji: "⚾", bg: "from-blue-600/20 to-blue-900/30", border: "border-blue-500/30", text: "text-blue-400" },
-  { id: "football", label: "Football", emoji: "🏈", bg: "from-red-600/20 to-red-900/30", border: "border-red-500/30", text: "text-red-400" },
-  { id: "volleyball", label: "Volleyball", emoji: "🏐", bg: "from-violet-600/20 to-violet-900/30", border: "border-violet-500/30", text: "text-violet-400" },
-  { id: "softball", label: "Softball", emoji: "🥎", bg: "from-yellow-600/20 to-yellow-900/30", border: "border-yellow-500/30", text: "text-yellow-400" },
-  { id: "lacrosse", label: "Lacrosse", emoji: "🥍", bg: "from-cyan-600/20 to-cyan-900/30", border: "border-cyan-500/30", text: "text-cyan-400" },
-  { id: "hockey", label: "Hockey", emoji: "🏒", bg: "from-sky-600/20 to-sky-900/30", border: "border-sky-500/30", text: "text-sky-400" },
+const STYLE_OPTIONS = [
+  { id: "royal-monarch", label: "Royal Monarch", emoji: "👑", bg: "from-amber-600/20 to-amber-900/30", border: "border-amber-500/30", text: "text-amber-400" },
+  { id: "military-general", label: "Military General", emoji: "⚔️", bg: "from-emerald-600/20 to-emerald-900/30", border: "border-emerald-500/30", text: "text-emerald-400" },
+  { id: "renaissance-noble", label: "Renaissance Noble", emoji: "🏰", bg: "from-rose-600/20 to-rose-900/30", border: "border-rose-500/30", text: "text-rose-400" },
+  { id: "wizard-sorcerer", label: "Wizard Sorcerer", emoji: "🧙", bg: "from-violet-600/20 to-violet-900/30", border: "border-violet-500/30", text: "text-violet-400" },
+  { id: "astronaut-explorer", label: "Astronaut Explorer", emoji: "🚀", bg: "from-sky-600/20 to-sky-900/30", border: "border-sky-500/30", text: "text-sky-400" },
+  { id: "flower-garden", label: "Flower Garden", emoji: "🌸", bg: "from-pink-600/20 to-pink-900/30", border: "border-pink-500/30", text: "text-pink-400" },
 ];
-
-const DEFAULT_FREE_LIMIT = 1;
 
 const DEFAULT_PRICING = [
   { id: "pack-3", name: "Starter", portraits: 3, price: 4.99, featured: false },
   { id: "pack-10", name: "Pro", portraits: 10, price: 12.99, featured: true },
 ];
 
-type Step = "sport" | "upload" | "uploading" | "details" | "generating" | "result";
-type CreativeMode = "card" | "portrait";
+type Step = "form" | "uploading" | "generating" | "result";
 
 function ConfettiOverlay() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -137,17 +134,14 @@ function CreatePageInner() {
   const buyParam = searchParams.get("buy");
   const purchasedParam = searchParams.get("purchased");
   const { user } = useAuth();
-  const [step, setStep] = useState<Step>(sportParam ? "upload" : "sport");
-  const [creativeMode, setCreativeMode] = useState<CreativeMode>("card");
+  const [step, setStep] = useState<Step>("form");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [selectedSport, setSelectedSport] = useState<string | null>(sportParam);
+  const [selectedStyle, setSelectedStyle] = useState<string | null>(sportParam);
   const [dragOver, setDragOver] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [playerName, setPlayerName] = useState("");
-  const [playerNumber, setPlayerNumber] = useState("");
-  const [playerPosition, setPlayerPosition] = useState("");
-  const [freeRemaining, setFreeRemaining] = useState(DEFAULT_FREE_LIMIT);
+  const [petName, setPetName] = useState("");
+  const [freeRemaining, setFreeRemaining] = useState(0);
   const [paidCredits, setPaidCredits] = useState(0);
   const [settings, setSettings] = useState<SalesSettings | null>(null);
   const [showSignIn, setShowSignIn] = useState(false);
@@ -156,6 +150,15 @@ function CreatePageInner() {
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null);
+  const [savedImageUrl, setSavedImageUrl] = useState<string | null>(null);
+  const [gallery, setGallery] = useState<GalleryItem[]>([]);
+  const [galleryLoading, setGalleryLoading] = useState(false);
+  const [printCart, setPrintCart] = useState<Record<string, number>>({});
+  const [printCheckoutLoading, setPrintCheckoutLoading] = useState(false);
+  const [showOTO, setShowOTO] = useState(false);
+  const [otoExpired, setOtoExpired] = useState(false);
+  const otoStartRef = useRef<number>(0);
+  const [otoTimeLeft, setOtoTimeLeft] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const purchaseVerified = useRef(false);
@@ -163,8 +166,13 @@ function CreatePageInner() {
   // Load settings on mount
   useEffect(() => {
     fetchSettings().then((s) => {
-      if (s) setSettings(s);
+      if (s) {
+        setSettings(s);
+        // Set free credits from settings for non-signed-in state
+        if (!user) setFreeRemaining(s.freePortraits || 1);
+      }
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Load credits from server when user signs in
@@ -175,20 +183,39 @@ function CreatePageInner() {
       const data = await fetchCredits(token);
       if (data) {
         setFreeRemaining(data.freeRemaining);
-        setPaidCredits(data.credits);
+        setPaidCredits(data.credits + (data.bonusCredits || 0));
       }
     } catch (e) {
       console.error('[refreshCredits] error:', e);
     }
   }, [user]);
 
+  // Load user's saved portrait gallery
+  const refreshGallery = useCallback(async () => {
+    if (!user) return;
+    setGalleryLoading(true);
+    try {
+      const token = await user.getIdToken();
+      const items = await fetchGallery(token);
+      setGallery(items.map(i => ({ ...i, imageUrl: proxyImageUrl(i.imageUrl) })));
+    } catch (e) {
+      console.error('[refreshGallery] error:', e);
+    } finally {
+      setGalleryLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => {
     refreshCredits();
-  }, [refreshCredits]);
+    refreshGallery();
+  }, [refreshCredits, refreshGallery]);
 
   // Auto-close sign-in modal when user signs in
   useEffect(() => {
-    if (user && showSignIn) setShowSignIn(false);
+    if (user && showSignIn) {
+      setShowSignIn(false);
+      trackLead();
+    }
   }, [user, showSignIn]);
 
   // After Stripe redirect: verify & fulfill purchase, then show confetti
@@ -203,6 +230,7 @@ function CreatePageInner() {
           setFreeRemaining(result.freeRemaining);
           setPaidCredits(result.credits);
           setPurchaseMessage(`${result.credits} credits ready to use!`);
+          trackPurchase(result.purchaseValue || 0);
           setShowConfetti(true);
           setTimeout(() => setShowConfetti(false), 4000);
           setTimeout(() => setPurchaseMessage(null), 5000);
@@ -244,11 +272,11 @@ function CreatePageInner() {
       setUploadedImage(compressed);
       // Brief pause at 100% before moving on
       await new Promise((r) => setTimeout(r, 400));
-      setStep("details");
+      setStep("form");
     } catch (err) {
       console.error('[handleFile] compression failed:', err);
       setError('Failed to process image. Please try a different photo.');
-      setStep("upload");
+      setStep("form");
     }
   }, []);
 
@@ -268,7 +296,7 @@ function CreatePageInner() {
   };
 
   const handleGenerate = async () => {
-    if (!uploadedImage || !selectedSport || !playerName.trim() || !playerNumber.trim()) return;
+    if (!uploadedImage || !selectedStyle || !petName.trim()) return;
     // Require sign-in before generating
     if (!user) {
       setShowSignIn(true);
@@ -277,32 +305,40 @@ function CreatePageInner() {
     if (totalCredits <= 0) return;
     setStep("generating");
     setError(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     try {
       const token = await user.getIdToken();
       const result = await generatePortrait(
         uploadedImage,
-        selectedSport,
-        playerName.trim(),
-        playerNumber.trim(),
-        playerPosition.trim() || undefined,
+        selectedStyle,
+        petName.trim(),
+        undefined,
+        undefined,
         token,
-        creativeMode
+        'portrait'
       );
       if (result.ok && result.data) {
         const composited = await compositePortrait(result.data);
         setGeneratedImages([composited]);
-        // Refresh credits from server
+        setSavedImageUrl(result.savedImageUrl || null);
+        // Refresh credits and gallery from server
         await refreshCredits();
+        refreshGallery(); // fire & forget — don't block the result step
+        trackViewContent(selectedStyle || '', 'portrait');
+        otoStartRef.current = Date.now();
+        setOtoTimeLeft(15 * 60 * 1000);
+        setShowOTO(true);
+        setOtoExpired(false);
         setStep("result");
       } else {
         setError(result.error || "Generation failed. Please try again.");
-        setStep("details");
+        setStep("form");
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
       console.error('[generate] error:', msg);
       setError(`Something went wrong: ${msg}`);
-      setStep("details");
+      setStep("form");
     }
   };
 
@@ -328,13 +364,30 @@ function CreatePageInner() {
     }
   };
 
-  const canGenerate = !!uploadedImage && !!selectedSport && !!playerName.trim() && !!playerNumber.trim() && (user ? totalCredits > 0 : true);
+  const canGenerate = !!uploadedImage && !!selectedStyle && !!petName.trim() && (user ? totalCredits > 0 : true);
 
   // Composite player info onto portrait via canvas
   // Pass through the AI-generated image as-is (the frame already contains name/number)
   const compositePortrait = useCallback((imgSrc: string): Promise<string> => {
     return Promise.resolve(imgSrc);
   }, []);
+
+  // OTO countdown on result page (ticks every second while OTO is active but modal is closed)
+  useEffect(() => {
+    if (showOTO || otoExpired || otoStartRef.current === 0) return;
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - otoStartRef.current;
+      const remaining = 15 * 60 * 1000 - elapsed;
+      if (remaining <= 0) {
+        setOtoTimeLeft(0);
+        setOtoExpired(true);
+        clearInterval(interval);
+      } else {
+        setOtoTimeLeft(remaining);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [showOTO, otoExpired]);
 
   return (
     <div className="min-h-screen bg-slate-950">
@@ -347,6 +400,41 @@ function CreatePageInner() {
           // Auto-trigger generation after sign-in
           setTimeout(() => handleGenerate(), 300);
         }}
+      />
+
+      {/* OTO Modal */}
+      <OTOModal
+        open={showOTO}
+        onClose={() => setShowOTO(false)}
+        onExpired={() => { setShowOTO(false); setOtoExpired(true); }}
+        imageUrl={generatedImages[0] || ''}
+        petName={petName}
+        styleName={STYLE_OPTIONS.find(s => s.id === selectedStyle)?.label || selectedStyle || 'Portrait'}
+        printPricing={settings?.printPricing || [
+          { size: '12x12', price: 29.99, desc: 'Perfect for desks, shelves, and small spaces.', popular: false },
+          { size: '24x24', price: 49.99, desc: 'Ideal for bedrooms and man caves.', popular: true },
+          { size: '36x36', price: 89.99, desc: 'Statement piece. Gallery-ready.', popular: false },
+        ]}
+        onCheckout={async (items) => {
+          if (!user) { setShowSignIn(true); return; }
+          setPrintCheckoutLoading(true);
+          setError(null);
+          try {
+            const token = await user.getIdToken();
+            const checkoutImageUrl = savedImageUrl || generatedImages[0] || '';
+            const res = await createPrintCheckout(token, items, checkoutImageUrl);
+            if (res.ok && res.url) {
+              window.location.href = res.url;
+            } else {
+              setError(res.error || 'Checkout failed');
+            }
+          } catch (e) {
+            setError(e instanceof Error ? e.message : 'Checkout error');
+          } finally {
+            setPrintCheckoutLoading(false);
+          }
+        }}
+        checkoutLoading={printCheckoutLoading}
       />
 
       {/* Confetti celebration */}
@@ -423,45 +511,8 @@ function CreatePageInner() {
       <nav className="border-b border-white/5 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center shrink-0">
-            <img src="/assets/logo/PP%20LOGO%20AI.png" alt="Picture Pros" className="h-9 sm:h-10" />
+            <span className="text-xl font-black tracking-tight">👑 Royal Paws</span>
           </Link>
-
-          {/* Step indicator */}
-          <div className="flex items-center gap-1 sm:gap-2 mx-2 overflow-x-auto">
-            {(["sport", "upload", "details", "result"] as const).map((s, i) => {
-              const labels = ["Sport", "Photo", "Details", "Portrait"];
-              const stepOrder: Record<Step, number> = { sport: 0, upload: 1, uploading: 1, details: 2, generating: 3, result: 4 };
-              const thisOrder = stepOrder[s];
-              const currentOrder = stepOrder[step];
-              const isActive = (s === "result" && step === "generating") || (s === "upload" && step === "uploading") || step === s;
-              const isDone = thisOrder < currentOrder && !(s === "result" && step === "generating");
-              const isClickable = isDone && step !== "generating";
-              return (
-                <div key={s} className="flex items-center gap-1 sm:gap-2">
-                  {i > 0 && <div className={`w-3 sm:w-6 h-px ${isDone ? "bg-indigo-500" : "bg-slate-800"}`} />}
-                  <button
-                    type="button"
-                    disabled={!isClickable}
-                    onClick={() => isClickable && setStep(s)}
-                    className={`flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
-                      isDone ? "bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 cursor-pointer" : isActive ? "bg-slate-800 text-white cursor-default" : "text-slate-600 cursor-default"
-                    } disabled:cursor-default`}
-                  >
-                    {isDone ? (
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                      </svg>
-                    ) : (
-                      <span>{i + 1}</span>
-                    )}
-                    <span className="hidden sm:inline">{labels[i]}</span>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Account */}
           <div className="shrink-0">
             {user ? (
               <AccountDropdown credits={totalCredits} onBuyCredits={() => setShowBuyModal(true)} />
@@ -477,54 +528,15 @@ function CreatePageInner() {
         </div>
       </nav>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
-        {/* Step 1: Sport Selection */}
-        {step === "sport" && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
-                Pick Your <span className="gradient-text">Sport</span>
+      <div className="max-w-lg mx-auto px-4 sm:px-6 py-10">
+        {/* Single-page form */}
+        {step === "form" && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+            <div className="text-center">
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+                Create Your <span className="gradient-text">Pet Portrait</span>
               </h1>
-              <p className="text-slate-400 mt-2">Choose a sport to get started with your portrait.</p>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-3xl mx-auto">
-              {SPORT_OPTIONS.map((sport) => (
-                <button
-                  key={sport.id}
-                  onClick={() => { setSelectedSport(sport.id); setStep("upload"); }}
-                  className={`group relative aspect-[4/5] rounded-2xl border bg-slate-900/60 overflow-hidden transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl flex flex-col items-center justify-center gap-3 ${
-                    selectedSport === sport.id
-                      ? `border-2 ${sport.border} shadow-lg`
-                      : "border-white/10 hover:border-slate-600"
-                  }`}
-                >
-                  <div className={`absolute inset-0 bg-gradient-to-b ${sport.bg} opacity-[0.08] group-hover:opacity-[0.18] transition-opacity`} />
-                  <span className="text-5xl sm:text-6xl relative z-10 group-hover:scale-110 transition-transform duration-300">{sport.emoji}</span>
-                  <span className="relative z-10 text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400 group-hover:text-white transition-colors">{sport.label}</span>
-                  <div className="absolute bottom-3 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                    <span className="text-[9px] font-bold text-white/60 bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">Select &rarr;</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Step 1: Upload / Take Photo */}
-        {step === "upload" && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="text-center mb-8">
-              {selectedSport && (
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/5 text-indigo-400 text-xs font-bold mb-4">
-                  <span>{SPORT_OPTIONS.find(s => s.id === selectedSport)?.emoji}</span>
-                  {SPORT_OPTIONS.find(s => s.id === selectedSport)?.label} Portrait
-                </div>
-              )}
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
-                Upload or Snap a <span className="gradient-text">Photo</span>
-              </h1>
-              <p className="text-slate-400 mt-2">For best results, use a standing photo in uniform so we can match the jersey colors.</p>
+              <p className="text-slate-400 mt-2 text-sm">Upload a photo of your pet, choose a style, and we&apos;ll create a stunning AI portrait.</p>
               {error && (
                 <div className="mt-4 px-4 py-3 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 text-sm font-medium">
                   {error}
@@ -532,78 +544,152 @@ function CreatePageInner() {
               )}
             </div>
 
-            {/* Upload zone */}
-            <div
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className={`relative cursor-pointer rounded-3xl border-2 border-dashed p-12 sm:p-16 text-center transition-all ${
-                dragOver
-                  ? "border-indigo-500 bg-indigo-500/5"
-                  : "border-slate-800 hover:border-slate-600 bg-slate-900/30 hover:bg-slate-900/50"
-              }`}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => { e.target.files?.[0] && handleFile(e.target.files[0]); e.target.value = ""; }}
-              />
-
-              <div className="flex flex-col items-center gap-4">
-                <div className={`p-4 rounded-2xl transition-colors ${dragOver ? "bg-indigo-500/10" : "bg-slate-800"}`}>
-                  <svg className={`w-10 h-10 transition-colors ${dragOver ? "text-indigo-400" : "text-slate-500"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-base font-bold text-slate-300">
-                    <span className="text-indigo-400">Tap to upload</span> from camera roll or drag and drop
-                  </p>
-                  <p className="text-sm text-slate-500 mt-1">JPG, PNG, HEIC — any photo of your player in uniform</p>
-                </div>
+            {/* Style Selection */}
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Choose a Style *</label>
+              <div className="grid grid-cols-3 gap-2">
+                {STYLE_OPTIONS.map((style) => (
+                  <button
+                    key={style.id}
+                    type="button"
+                    onClick={() => setSelectedStyle(style.id)}
+                    className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border transition-all ${
+                      selectedStyle === style.id
+                        ? `border-2 ${style.border} bg-gradient-to-b ${style.bg}`
+                        : "border-slate-800 bg-slate-900/60 hover:border-slate-600"
+                    }`}
+                  >
+                    <span className="text-2xl">{style.emoji}</span>
+                    <span className={`text-[9px] font-black uppercase tracking-wider ${selectedStyle === style.id ? style.text : "text-slate-500"}`}>{style.label}</span>
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Camera button — separate from upload zone */}
-            <div className="flex items-center gap-4 mt-4">
-              <div className="h-px flex-1 bg-slate-800" />
-              <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">or</span>
-              <div className="h-px flex-1 bg-slate-800" />
+            {/* Photo Upload */}
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Upload a Photo *</label>
+              {!uploadedImage ? (
+                <>
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`relative cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-all ${
+                      dragOver
+                        ? "border-indigo-500 bg-indigo-500/5"
+                        : "border-slate-800 hover:border-slate-600 bg-slate-900/30 hover:bg-slate-900/50"
+                    }`}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => { e.target.files?.[0] && handleFile(e.target.files[0]); e.target.value = ""; }}
+                    />
+                    <div className="flex flex-col items-center gap-3">
+                      <div className={`p-3 rounded-xl transition-colors ${dragOver ? "bg-indigo-500/10" : "bg-slate-800"}`}>
+                        <svg className={`w-8 h-8 transition-colors ${dragOver ? "text-indigo-400" : "text-slate-500"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                        </svg>
+                      </div>
+                      <p className="text-sm font-bold text-slate-300">
+                        <span className="text-indigo-400">Click to upload</span> or drag and drop
+                      </p>
+                      <p className="text-xs text-slate-600">JPG, PNG — photo in uniform for best results</p>
+                    </div>
+                  </div>
+                  <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => { e.target.files?.[0] && handleFile(e.target.files[0]); e.target.value = ""; }}
+                  />
+                  <button
+                    onClick={handleTakePhoto}
+                    className="w-full mt-3 px-4 py-3 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800 font-bold text-xs text-slate-400 uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+                    </svg>
+                    Or take a photo now
+                  </button>
+                </>
+              ) : (
+                <div className="flex items-center gap-4 p-3 rounded-2xl border border-slate-700 bg-slate-900/60">
+                  <div className="w-20 h-24 rounded-xl overflow-hidden border border-slate-600 shrink-0">
+                    <img src={uploadedImage} alt="Uploaded" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-emerald-400 flex items-center gap-1.5">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                      Photo uploaded
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">Tap change to use a different photo</p>
+                  </div>
+                  <button
+                    onClick={() => setUploadedImage(null)}
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-bold text-slate-400 hover:text-white transition"
+                  >
+                    Change
+                  </button>
+                </div>
+              )}
             </div>
 
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={(e) => { e.target.files?.[0] && handleFile(e.target.files[0]); e.target.value = ""; }}
-            />
-            <button
-              onClick={handleTakePhoto}
-              className="w-full mt-4 px-6 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-3"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
-              </svg>
-              Take a Live Photo Now
-            </button>
+            {/* Pet Name */}
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Pet Name *</label>
+              <input
+                type="text"
+                value={petName}
+                onChange={(e) => setPetName(e.target.value)}
+                placeholder="e.g. Buddy, Luna, Max"
+                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-600 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition text-sm"
+              />
+            </div>
 
-            <div className="mt-6 grid grid-cols-3 gap-3 text-center">
-              {[
-                { icon: "✓", label: "Standing in uniform works best" },
-                { icon: "✓", label: "Phone camera is perfect" },
-                { icon: "✓", label: "Full body or 3/4 shot" },
-              ].map((tip) => (
-                <div key={tip.label} className="flex items-center gap-2 text-xs text-slate-500 justify-center">
-                  <span className="text-emerald-500 font-bold">{tip.icon}</span>
-                  {tip.label}
+            {/* Generate button */}
+            <div className="flex flex-col items-center gap-3 pt-2">
+              {totalCredits > 0 || !user ? (
+                <>
+                  <button
+                    onClick={handleGenerate}
+                    disabled={!canGenerate}
+                    className={`w-full px-10 py-4 rounded-full font-black text-base uppercase tracking-wider transition-all ${
+                      canGenerate
+                        ? "bg-indigo-600 hover:bg-indigo-500 text-white hover:shadow-2xl hover:shadow-indigo-500/25 hover:-translate-y-0.5"
+                        : "bg-slate-800 text-slate-600 cursor-not-allowed"
+                    }`}
+                  >
+                    {freeRemaining > 0 ? "Generate Portrait — Free" : "Generate Portrait"}
+                  </button>
+                  <p className="text-xs text-slate-600">
+                    {user ? (
+                      freeRemaining > 0
+                        ? `${freeRemaining} free portrait${freeRemaining !== 1 ? "s" : ""} remaining`
+                        : `${paidCredits} credit${paidCredits !== 1 ? "s" : ""} remaining`
+                    ) : (
+                      "Sign in to generate — it's free"
+                    )}
+                  </p>
+                </>
+              ) : (
+                <div className="text-center w-full">
+                  <p className="text-sm font-bold text-slate-400 mb-3">You&apos;ve used your free portrait. Get more credits to continue!</p>
+                  <button
+                    onClick={() => setShowBuyModal(true)}
+                    className="w-full px-8 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-full font-black text-sm uppercase tracking-wider transition-all cursor-pointer"
+                  >
+                    Buy Credits
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         )}
@@ -626,171 +712,6 @@ function CreatePageInner() {
                 />
               </div>
               <p className="text-xs text-slate-600 text-center mt-3">{Math.round(uploadProgress)}%</p>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Player Details */}
-        {step === "details" && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Sport badge at top */}
-            {selectedSport && (() => {
-              const sport = SPORT_OPTIONS.find(s => s.id === selectedSport);
-              return sport ? (
-                <div className="flex items-center justify-center gap-3 mb-6">
-                  <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border ${sport.border} bg-gradient-to-r ${sport.bg}`}>
-                    <span className="text-lg">{sport.emoji}</span>
-                    <span className={`text-sm font-bold ${sport.text}`}>{sport.label}</span>
-                  </div>
-                  <button
-                    onClick={() => setStep("sport")}
-                    className="text-[10px] font-bold text-slate-500 hover:text-slate-300 underline underline-offset-2 transition"
-                  >
-                    Change
-                  </button>
-                </div>
-              ) : null;
-            })()}
-
-            <div className="text-center mb-8">
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
-                Player <span className="gradient-text">Details</span>
-              </h1>
-              <p className="text-slate-400 mt-2">Tell us about the player so we can personalize the portrait.</p>
-              {error && (
-                <div className="mt-4 px-4 py-3 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 text-sm font-medium">
-                  {error}
-                </div>
-              )}
-            </div>
-
-            {/* Photo preview */}
-            {uploadedImage && (
-              <div className="flex justify-center mb-8">
-                <div className="relative w-32 h-40 rounded-2xl overflow-hidden border border-slate-700">
-                  <img src={uploadedImage} alt="Uploaded" className="w-full h-full object-cover" />
-                  <button
-                    onClick={() => { setUploadedImage(null); setStep("upload"); }}
-                    className="absolute top-1 right-1 w-6 h-6 bg-slate-900/80 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition"
-                  >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Player info fields */}
-            <div className="max-w-md mx-auto space-y-4 mb-8">
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Player Name *</label>
-                <input
-                  type="text"
-                  value={playerName}
-                  onChange={(e) => setPlayerName(e.target.value)}
-                  placeholder="e.g. John Smith"
-                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition text-sm"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Jersey Number *</label>
-                  <input
-                    type="text"
-                    value={playerNumber}
-                    onChange={(e) => setPlayerNumber(e.target.value)}
-                    placeholder="e.g. 7"
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Position <span className="text-slate-700">(optional)</span></label>
-                  <input
-                    type="text"
-                    value={playerPosition}
-                    onChange={(e) => setPlayerPosition(e.target.value)}
-                    placeholder="e.g. Midfielder"
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition text-sm"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Style toggle */}
-            <div className="max-w-md mx-auto mb-6">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Portrait Style</label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCreativeMode('card')}
-                  className={`px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-                    creativeMode === 'card'
-                      ? 'bg-indigo-600/20 border-2 border-indigo-500 text-indigo-300'
-                      : 'bg-slate-900 border border-slate-700 text-slate-400 hover:border-slate-500'
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H3.75A2.25 2.25 0 001.5 6.75v10.5A2.25 2.25 0 003.75 21z" />
-                  </svg>
-                  Player Card
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCreativeMode('portrait')}
-                  className={`px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-                    creativeMode === 'portrait'
-                      ? 'bg-violet-600/20 border-2 border-violet-500 text-violet-300'
-                      : 'bg-slate-900 border border-slate-700 text-slate-400 hover:border-slate-500'
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                  </svg>
-                  Portrait
-                </button>
-              </div>
-            </div>
-
-            {/* Generate button / Buy credits */}
-            <div className="mt-8 flex flex-col items-center gap-3">
-              {totalCredits > 0 || !user ? (
-                <>
-                  <button
-                    onClick={handleGenerate}
-                    disabled={!canGenerate}
-                    className={`w-full sm:w-auto px-10 py-4 rounded-2xl font-black text-base uppercase tracking-wider transition-all ${
-                      canGenerate
-                        ? "bg-indigo-600 hover:bg-indigo-500 text-white hover:shadow-2xl hover:shadow-indigo-500/25 hover:-translate-y-0.5"
-                        : "bg-slate-800 text-slate-600 cursor-not-allowed"
-                    }`}
-                  >
-                    {freeRemaining > 0 ? "Generate Portrait — Free" : "Generate Portrait"}
-                  </button>
-                  <p className="text-xs text-slate-600">
-                    {user ? (
-                      freeRemaining > 0
-                        ? `${freeRemaining} free portrait${freeRemaining !== 1 ? "s" : ""} remaining`
-                        : `${paidCredits} credit${paidCredits !== 1 ? "s" : ""} remaining`
-                    ) : (
-                      "Sign in to generate"
-                    )}
-                  </p>
-                  {(!playerName.trim() || !playerNumber.trim()) && (
-                    <p className="text-xs text-amber-500/70">Fill in player name and number to continue</p>
-                  )}
-                </>
-              ) : (
-                <div className="text-center">
-                  <p className="text-sm font-bold text-slate-400 mb-3">You&apos;ve used your free portrait. Get more credits to continue!</p>
-                  <button
-                    onClick={() => setShowBuyModal(true)}
-                    className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-black text-sm uppercase tracking-wider transition-all cursor-pointer"
-                  >
-                    Buy Credits
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -820,17 +741,20 @@ function CreatePageInner() {
             <div className="mt-8 flex flex-col items-center gap-2">
               <div className="flex items-center gap-3">
                 <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
-                <p className="text-sm font-black text-white">
-                  Creating {creativeMode === 'portrait' ? 'Portrait' : 'Player Card'}
-                </p>
+                <p className="text-sm font-black text-white">Creating Pet Portrait</p>
               </div>
-              {playerName && (
+              {petName && (
                 <p className="text-xs text-slate-400">
-                  for <span className="font-bold text-white">{playerName}</span>
-                  {playerNumber && <> #{playerNumber}</>}
+                  for <span className="font-bold text-white">{petName}</span>
                 </p>
               )}
-              <p className="text-[10px] text-slate-600 mt-1">This usually takes about 20 seconds</p>
+              <p className="text-[10px] text-slate-600 mt-1">This process can take up to 60 seconds</p>
+              <p className="text-[10px] text-amber-500/70 mt-2 flex items-center gap-1">
+                <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+                Please do not refresh or close this window
+              </p>
             </div>
 
             {/* Progress steps */}
@@ -853,9 +777,9 @@ function CreatePageInner() {
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="text-center mb-8">
               <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
-                {playerName ? <>{playerName}&apos;s </> : "Your "}<span className="gradient-text">Portrait</span>
+                {petName ? <>{petName}&apos;s </> : "Your "}<span className="gradient-text">Portrait</span>
               </h1>
-              <p className="text-slate-400 mt-2">Here&apos;s your AI-generated sports portrait!</p>
+              <p className="text-slate-400 mt-2">Here&apos;s your AI-generated pet portrait!</p>
             </div>
 
             <div className="flex justify-center">
@@ -866,87 +790,230 @@ function CreatePageInner() {
               </div>
             </div>
 
-            <div className="mt-8 flex flex-col items-center gap-3">
-              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                <button
-                  onClick={async () => {
-                    const url = generatedImages[0];
-                    if (!url) return;
-                    const fileName = `${(playerName || "portrait").replace(/\s+/g, "_")}_portrait.png`;
-                    // Convert data URL to blob for reliable downloads
-                    let blob: Blob;
-                    try {
-                      const res = await fetch(url);
-                      blob = await res.blob();
-                    } catch {
-                      // Fallback: direct anchor download
-                      const a = document.createElement("a");
-                      a.href = url;
-                      a.download = fileName;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                      return;
+            {/* Free download button — image is already watermarked server-side */}
+            <div className="mt-4 flex justify-center">
+              <button
+                onClick={() => {
+                  const src = generatedImages[0] || '';
+                  const imgEl = new Image();
+                  imgEl.crossOrigin = 'anonymous';
+                  imgEl.onload = () => {
+                    const c = document.createElement('canvas');
+                    c.width = imgEl.width; c.height = imgEl.height;
+                    const cx = c.getContext('2d');
+                    if (!cx) return;
+                    cx.drawImage(imgEl, 0, 0);
+                    cx.save();
+                    cx.translate(c.width / 2, c.height / 2);
+                    cx.rotate(-Math.PI / 4);
+                    cx.font = `bold ${Math.max(24, Math.floor(c.width / 14))}px sans-serif`;
+                    cx.fillStyle = 'rgba(255,255,255,0.55)';
+                    cx.textAlign = 'center';
+                    cx.textBaseline = 'middle';
+                    const wm = 'SAMPLE';
+                    const gap = Math.max(100, Math.floor(c.width / 5));
+                    const span = Math.max(c.width, c.height) * 1.5;
+                    for (let y = -span; y < span; y += gap) {
+                      for (let x = -span; x < span; x += gap * 1.8) { cx.fillText(wm, x, y); }
                     }
-                    // On mobile/touch devices, try native share (camera roll save)
-                    const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-                    if (isMobile && navigator.canShare) {
-                      try {
-                        const file = new File([blob], fileName, { type: blob.type || "image/png" });
-                        if (navigator.canShare({ files: [file] })) {
-                          await navigator.share({ files: [file], title: fileName });
-                          return;
-                        }
-                      } catch { /* share cancelled, fall through to download */ }
-                    }
-                    // Desktop: blob URL triggers a real file download
-                    const blobUrl = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = blobUrl;
-                    a.download = fileName;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-                  }}
-                  className="px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                  </svg>
-                  Download Image
-                </button>
-                <button className="px-8 py-3 rounded-xl border border-slate-700 hover:border-slate-500 font-bold text-sm text-slate-300 transition-all flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18.75 12h.008v.008h-.008V12zm-8.25 0h.008v.008H10.5V12z" />
-                  </svg>
-                  Order Prints
-                </button>
-              </div>
-
-              {freeRemaining <= 0 && paidCredits <= 0 && (
-                <div className="mt-4 p-4 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 text-center max-w-md">
-                  <p className="text-sm font-bold text-indigo-400">Out of credits</p>
-                  <p className="text-xs text-slate-400 mt-1">Purchase more credits to keep creating portraits.</p>
-                  <button
-                    onClick={() => setShowBuyModal(true)}
-                    className="mt-3 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
-                  >
-                    Buy Credits
-                  </button>
-                  {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
-                </div>
-              )}
-
-              {freeRemaining > 0 ? (
-                <button
-                  onClick={() => { setStep("sport"); setUploadedImage(null); setSelectedSport(sportParam); setGeneratedImages([]); setPlayerName(""); setPlayerNumber(""); setPlayerPosition(""); setError(null); setCreativeMode("card"); }}
-                  className="mt-2 text-sm text-slate-500 hover:text-slate-300 transition"
-                >
-                  Create Another Portrait
-                </button>
-              ) : null}
+                    cx.restore();
+                    const link = document.createElement('a');
+                    link.href = c.toDataURL('image/jpeg', 0.92);
+                    link.download = `${petName || 'portrait'}-digital.jpg`;
+                    link.click();
+                  };
+                  imgEl.src = src;
+                }}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs transition"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                Download Digital Portrait (Free)
+              </button>
             </div>
+
+            {/* Trust badges */}
+            <div className="mt-4 flex items-center justify-center gap-4 text-[10px] font-bold text-slate-500">
+              <span className="flex items-center gap-1">
+                <svg className="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>
+                Secure checkout
+              </span>
+              <span className="flex items-center gap-1">
+                <svg className="w-3 h-3 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
+                Free shipping
+              </span>
+              <span className="flex items-center gap-1">
+                <svg className="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                Premium quality
+              </span>
+            </div>
+
+            {/* OTO countdown on result page */}
+            {!showOTO && !otoExpired && otoTimeLeft > 0 && (
+              <div className="mt-4 flex justify-center">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+                  <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="text-xs font-black text-amber-400 uppercase tracking-wider">
+                    Limited-time discount expires in: {String(Math.floor(otoTimeLeft / 60000)).padStart(2, '0')}:{String(Math.floor((otoTimeLeft % 60000) / 1000)).padStart(2, '0')}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Print products inline */}
+            <div className="mt-6 space-y-3 w-full">
+              {(settings?.printPricing || [
+                { size: '12x12', price: 29.99, desc: 'Perfect for desks, shelves, and small spaces.', popular: false },
+                { size: '24x24', price: 49.99, desc: 'Ideal for bedrooms and man caves.', popular: true },
+                { size: '36x36', price: 89.99, desc: 'Statement piece. Gallery-ready.', popular: false },
+              ]).map((pp) => {
+                const otoActive = !showOTO && !otoExpired && otoTimeLeft > 0;
+                const pct = (pp.otoPct != null ? pp.otoPct : 40) / 100;
+                const discounted = otoActive ? Math.round(pp.price * (1 - pct) * 100) / 100 : pp.price;
+                return { id: `print-${pp.size}`, name: `${pp.size.replace('x', '\u00D7')}\u2033 Print`, desc: pp.desc || '', price: discounted, originalPrice: pp.price, popular: pp.popular || false, otoActive, pctOff: Math.round(pct * 100) };
+              }).map((p) => {
+                const inCart = (printCart[p.id] || 0) > 0;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setPrintCart((prev: Record<string, number>) => {
+                      const next = { ...prev };
+                      if (next[p.id]) { delete next[p.id]; } else { next[p.id] = 1; }
+                      return next;
+                    })}
+                    className={`group w-full flex items-center gap-4 p-4 rounded-2xl border transition-all text-left cursor-pointer relative overflow-hidden ${
+                      inCart ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-slate-700 bg-slate-900/60 hover:border-indigo-500/50 hover:bg-slate-900'
+                    }`}
+                  >
+                    {p.popular && !inCart && (
+                      <span className="absolute top-0 left-4 px-2 py-0.5 bg-emerald-500 text-[8px] font-black uppercase tracking-wider rounded-b-lg text-white">Most Popular</span>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <span className="text-sm font-black text-white">{p.name}</span>
+                        {p.otoActive && <span className="text-xs text-slate-500 line-through">${p.originalPrice.toFixed(2)}</span>}
+                        <span className="text-sm font-black text-emerald-400">${p.price.toFixed(2)}</span>
+                        {p.otoActive && <span className="text-[10px] font-black text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded-md">{p.pctOff}% OFF</span>}
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5">{p.desc}</p>
+                    </div>
+                    <div className={`shrink-0 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition ${
+                      inCart ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                    }`}>
+                      {inCart ? '\u2713 Added' : 'Add'}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Checkout button */}
+            {Object.keys(printCart).length > 0 && (
+              <button
+                disabled={printCheckoutLoading}
+                onClick={async () => {
+                  if (!user) { setShowSignIn(true); return; }
+                  setPrintCheckoutLoading(true);
+                  setError(null);
+                  try {
+                    const otoAct = !showOTO && !otoExpired && otoTimeLeft > 0;
+                    const products = (settings?.printPricing || [
+                      { size: '12x12', price: 29.99 }, { size: '24x24', price: 49.99 }, { size: '36x36', price: 89.99 },
+                    ]).map(pp => {
+                      const pct = (pp.otoPct != null ? pp.otoPct : 40) / 100;
+                      const p = otoAct ? Math.round(pp.price * (1 - pct) * 100) / 100 : pp.price;
+                      return { id: `print-${pp.size}`, name: `${pp.size} Print`, price: p, qty: 1 };
+                    });
+                    const items = products.filter(p => printCart[p.id]).map(p => ({ id: p.id, name: p.name, price: p.price, qty: printCart[p.id] }));
+                    const token = await user.getIdToken();
+                    const imageUrl = savedImageUrl || generatedImages[0] || '';
+                    const res = await createPrintCheckout(token, items, imageUrl);
+                    if (res.ok && res.url) {
+                      window.location.href = res.url;
+                    } else {
+                      setError(res.error || 'Checkout failed');
+                    }
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : 'Checkout error');
+                  } finally {
+                    setPrintCheckoutLoading(false);
+                  }
+                }}
+                className="mt-4 w-full px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_100%] animate-[shimmer_3s_ease-in-out_infinite] hover:shadow-lg hover:shadow-indigo-500/30 font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
+              >
+                {printCheckoutLoading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                    </svg>
+                    Checkout — ${Object.entries(printCart).reduce((total, [id, qty]) => {
+                      const otoAct2 = !showOTO && !otoExpired && otoTimeLeft > 0;
+                      const prices: Record<string, number> = Object.fromEntries((settings?.printPricing || [
+                        { size: '12x12', price: 29.99 }, { size: '24x24', price: 49.99 }, { size: '36x36', price: 89.99 },
+                      ]).map(pp => {
+                        const pct = (pp.otoPct != null ? pp.otoPct : 40) / 100;
+                        return [`print-${pp.size}`, otoAct2 ? Math.round(pp.price * (1 - pct) * 100) / 100 : pp.price];
+                      }));
+                      return total + (prices[id] || 0) * (qty as number);
+                    }, 0).toFixed(2)}
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Free shipping banner */}
+            <div className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
+              <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25m-2.25 0V6.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v3.75" /></svg>
+              <div>
+                <p className="text-xs font-bold text-emerald-400">Free Shipping on All Orders</p>
+                <p className="text-[10px] text-slate-500">Delivered in 5-7 business days.</p>
+              </div>
+            </div>
+
+            {/* Secondary actions */}
+            <div className="mt-6 flex flex-col items-center gap-3">
+              <button
+                onClick={() => { setStep("form"); setGeneratedImages([]); setUploadedImage(null); setSelectedStyle(null); setPetName(''); }}
+                className="text-xs text-indigo-400 hover:text-indigo-300 transition cursor-pointer"
+              >
+                Create Another Portrait
+              </button>
+            </div>
+
+            {/* Gallery */}
+            {gallery.length > 0 && (
+              <div className="mt-12">
+                <h2 className="text-lg font-black text-white mb-4">Your Portraits</h2>
+                <div className="grid grid-cols-3 gap-2">
+                  {gallery.map((item: GalleryItem) => (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setGeneratedImages([proxyImageUrl(item.imageUrl)]);
+                        setSavedImageUrl(item.imageUrl);
+                        setPetName(item.playerName || '');
+                        setStep("result");
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="group relative aspect-square rounded-xl overflow-hidden border border-slate-800 hover:border-indigo-500/50 transition cursor-pointer"
+                    >
+                      <img
+                        src={proxyImageUrl(item.imageUrl)}
+                        alt={item.playerName || "Portrait"}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute bottom-0 left-0 right-0 p-2">
+                          <p className="text-[10px] font-bold text-white truncate">{item.playerName || "Portrait"}</p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Privacy Policy | Picture Pros",
-  description: "Privacy Policy for Picture Pros AI portrait generation service.",
+  title: "Privacy Policy | Royal Paws",
+  description: "Privacy Policy for Royal Paws AI pet portrait generation service.",
 };
 
 export default function PrivacyPage() {
@@ -11,7 +11,7 @@ export default function PrivacyPage() {
       <nav className="border-b border-white/5 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center">
           <Link href="/" className="flex items-center">
-            <img src="/assets/logo/PP%20LOGO%20AI.png" alt="Picture Pros" className="h-9 sm:h-10" />
+            <span className="text-xl font-black tracking-tight">👑 Royal Paws</span>
           </Link>
         </div>
       </nav>
@@ -24,8 +24,8 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-bold text-white mb-3">1. Introduction</h2>
             <p>
-              Picture Pros (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) operates the website{" "}
-              <strong className="text-white">picturepros.ai</strong> and provides AI-powered sports portrait
+              Royal Paws (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) operates the website{" "}
+              <strong className="text-white">royalpaws.ai</strong> and provides AI-powered pet portrait
               generation services. This Privacy Policy explains how we collect, use, disclose, and safeguard
               your information when you use our service.
             </p>

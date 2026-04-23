@@ -22,12 +22,12 @@ export default function SignInModal({ open, onClose, onSuccess }: SignInModalPro
     setError(null);
     setLoading(true);
     try {
-      await signInWithGoogle();
-      onSuccess();
+      const result = await signInWithGoogle();
+      // signInWithRedirect returns void and navigates away — no result means redirect is in progress
+      if (result) onSuccess();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Google sign-in failed";
-      if (msg.includes("popup-closed")) setError("Sign-in popup was closed");
-      else setError(msg);
+      setError(msg);
     } finally {
       setLoading(false);
     }
