@@ -43,8 +43,9 @@ export async function generatePortrait(
   playerNumber?: string,
   playerPosition?: string,
   authToken?: string,
-  mode?: string
-): Promise<{ ok: boolean; data?: string; savedImageUrl?: string; error?: string; backend?: string }> {
+  mode?: string,
+  sessionId?: string
+): Promise<{ ok: boolean; data?: string; savedImageUrl?: string; genId?: string; sessionId?: string; error?: string; backend?: string }> {
   let res: Response;
   try {
     // Use same-origin proxy to avoid CORS issues (Safari)
@@ -54,7 +55,14 @@ export async function generatePortrait(
         "Content-Type": "application/json",
         ...(authToken ? { "Authorization": `Bearer ${authToken}` } : {}),
       },
-      body: JSON.stringify({ photoBase64, sport: style, playerName: petName, brand: 'royal-paws', mode: mode || 'portrait' }),
+      body: JSON.stringify({
+        photoBase64,
+        sport: style,
+        playerName: petName,
+        brand: 'royal-paws',
+        mode: mode || 'portrait',
+        ...(sessionId ? { sessionId } : {}),
+      }),
     });
   } catch (e) {
     return { ok: false, error: `Network error: ${e instanceof Error ? e.message : 'Failed to reach server'}` };
@@ -72,7 +80,34 @@ export async function generatePortrait(
     return { ok: false, error: String(errMsg) };
   }
 
-  return { ok: true, data: json.data as string, savedImageUrl: json.savedImageUrl as string | undefined, backend: json.backend as string };
+  return {
+    ok: true,
+    data: json.data as string,
+    savedImageUrl: json.savedImageUrl as string | undefined,
+    genId: json.genId as string | undefined,
+    sessionId: json.sessionId as string | undefined,
+    backend: json.backend as string,
+  };
+}
+
+// Anonymous lead capture — links email to anonymous generations by sessionId
+export async function claimGeneration(
+  sessionId: string,
+  email: string,
+  source: string = 'royal-paws-homepage'
+): Promise<{ ok: boolean; linked?: number; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/consumer/claim-generation`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId, email, source }),
+    });
+    const json = await res.json();
+    if (json.ok) return { ok: true, linked: json.linked };
+    return { ok: false, error: json?.error?.message || 'Claim failed' };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Claim error' };
+  }
 }
 
 // Fetch consumer credit balance (requires auth)
@@ -168,20 +203,26 @@ export async function deleteGalleryItem(authToken: string, itemId: string): Prom
   }
 }
 
-// Create Stripe checkout session for print orders (requires auth)
+// Create Stripe checkout session for print orders.
+// Pass authToken for logged-in users, OR sessionId+email for anonymous guest checkout.
 export async function createPrintCheckout(
-  authToken: string,
+  authTokenOrNull: string | null,
   items: { id: string; name: string; price: number; qty: number }[],
-  imageUrl: string
+  imageUrl: string,
+  guest?: { sessionId: string; email: string }
 ): Promise<{ ok: boolean; url?: string; error?: string }> {
   try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (authTokenOrNull) headers["Authorization"] = `Bearer ${authTokenOrNull}`;
+    const body: Record<string, unknown> = { items, imageUrl, brand: 'royal-paws' };
+    if (guest && !authTokenOrNull) {
+      body.sessionId = guest.sessionId;
+      body.email = guest.email;
+    }
     const res = await fetch(`${API_BASE}/api/consumer/print-checkout`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${authToken}`,
-      },
-      body: JSON.stringify({ items, imageUrl, brand: 'royal-paws' }),
+      headers,
+      body: JSON.stringify(body),
     });
     const json = await res.json();
     if (json.ok && json.url) return { ok: true, url: json.url };

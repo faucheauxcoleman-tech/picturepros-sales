@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { fetchSettings, fetchCredits, createCheckout, SalesSettings } from "@/lib/api";
 import { useAuth } from "@/lib/AuthContext";
-import { signOut } from "@/lib/firebase";
 import SignInModal from "@/components/SignInModal";
 import AccountDropdown from "@/components/AccountDropdown";
 import FadeIn from "@/components/FadeIn";
+import InlineCreator from "@/components/InlineCreator";
 
 function HeroHeadline() {
   return (
@@ -17,15 +17,6 @@ function HeroHeadline() {
     </h1>
   );
 }
-
-const PET_STYLES = [
-  { name: "Royal Monarch", emoji: "\u{1F451}" },
-  { name: "Military General", emoji: "\u{2694}\uFE0F" },
-  { name: "Renaissance Noble", emoji: "\u{1F3DB}\uFE0F" },
-  { name: "Wizard Sorcerer", emoji: "\u{1FA84}" },
-  { name: "Astronaut Explorer", emoji: "\u{1F680}" },
-  { name: "Flower Garden", emoji: "\u{1F338}" },
-];
 
 const STEPS = [
   {
@@ -268,55 +259,41 @@ export default function Home() {
                 >
                   Sign In
                 </button>
-                <Link
-                  href="/create"
-                  className="px-4 sm:px-5 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-full text-sm font-bold transition-all hover:shadow-lg hover:shadow-indigo-500/25"
-                >
-                  Get Started
-                </Link>
               </div>
             )}
           </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="relative pt-32 pb-10 sm:pt-40 sm:pb-16 overflow-hidden">
+      {/* Hero — inline creator above the fold */}
+      <section className="relative pt-24 pb-10 sm:pt-32 sm:pb-16 overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[120px]" />
           <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-cyan-500/8 rounded-full blur-[100px]" />
         </div>
 
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/5 text-indigo-400 text-xs font-bold mb-8">
-            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-            AI-Powered — Free Portraits
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/5 text-indigo-400 text-xs font-bold mb-6">
+              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+              No signup needed — Free first portrait
+            </div>
+
+            <HeroHeadline />
+
+            <p className="mt-5 text-base sm:text-lg text-slate-400 max-w-xl mx-auto leading-relaxed">
+              Upload a photo of your dog or cat. AI generates a royal-quality portrait in 30 seconds.
+            </p>
           </div>
 
-          <HeroHeadline />
-
-          <p className="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Upload a photo of your dog, cat, or any pet. Our AI creates a stunning,
-            royal-quality portrait in seconds. No studio visit needed.
-          </p>
-
-          {/* Single CTA */}
-          <div className="mt-10">
-            <button
-              onClick={handleCreateClick}
-              className="w-full sm:w-auto px-10 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-full text-base font-black uppercase tracking-wider transition-all hover:shadow-2xl hover:shadow-indigo-500/25 hover:-translate-y-0.5 cursor-pointer inline-flex items-center justify-center gap-2"
-            >
-              Create Pet Portrait Free
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-            </button>
-          </div>
-          <p className="mt-4 text-xs text-slate-500">No credit card required. Your first portrait is free.</p>
+          {/* THE CREATOR — above the fold */}
+          <InlineCreator />
 
           {/* Trust indicators */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
             <span className="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold">
               <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>
-              Secure
+              No credit card
             </span>
             <span className="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold">
               <svg className="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
@@ -324,40 +301,13 @@ export default function Home() {
             </span>
             <span className="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold">
               <svg className="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg>
-              Free Shipping
+              Free shipping
             </span>
             <span className="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold">
               <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
-              Ready in 60s
+              Ready in 30s
             </span>
           </div>
-
-          {/* AI Sample showcase — all 6 styles */}
-          <div className="mt-14 sm:mt-20 max-w-5xl mx-auto">
-            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-6 text-center">Available Styles</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-5">
-              {[
-                { name: "Royal Monarch", file: "royal.png" },
-                { name: "Military General", file: "military.png" },
-                { name: "Renaissance Noble", file: "renaissance.png" },
-                { name: "Wizard Sorcerer", file: "wizard.png" },
-                { name: "Astronaut Explorer", file: "astronaut.png" },
-                { name: "Flower Garden", file: "flower.png" },
-              ].map((style) => (
-                <div key={style.name} className="relative group">
-                  <div className="absolute -inset-1 rounded-2xl bg-indigo-500/5 blur-xl group-hover:bg-indigo-500/15 transition-all" />
-                  <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 group-hover:border-indigo-500/30 group-hover:-translate-y-1 transition-all">
-                    <img src={`/assets/samples/${style.file}`} alt={`${style.name} AI Portrait`} className="w-full aspect-square object-cover" />
-                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3 sm:p-4">
-                      <p className="text-xs sm:text-sm font-black text-white">{style.name}</p>
-                      <p className="text-[9px] sm:text-[10px] text-slate-400">AI Generated</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
         </div>
       </section>
 
